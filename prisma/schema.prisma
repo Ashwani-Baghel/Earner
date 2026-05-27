@@ -1,0 +1,292 @@
+// This is your Prisma schema file
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  BUYER
+  SELLER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum GigStatus {
+  DRAFT
+  PENDING
+  ACTIVE
+  REJECTED
+  PAUSED
+  BANNED
+  DELETED
+}
+
+enum OrderStatus {
+  PENDING
+  ACTIVE
+  DELIVERED
+  REVISION
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+enum ReportTargetType {
+  USER
+  GIG
+  MESSAGE
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+model User {
+  id          String   @id  // Firebase UID
+  email       String   @unique
+  name        String
+  avatar      String?
+  role        Role     @default(BUYER)
+  isBanned    Boolean  @default(false)
+  isVerified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  sellerProfile SellerProfile?
+  gigsAsSeller  Gig[]          @relation("SellerGigs")
+  ordersAsBuyer Order[]        @relation("BuyerOrders")
+  ordersAsSeller Order[]       @relation("SellerOrders")
+  reviewsGiven  Review[]       @relation("ReviewsByBuyer")
+  favorites     Favorite[]     @relation("UserFavorites")
+  conversations ConversationParticipant[]
+  reportsGiven  Report[]       @relation("ReportsByUser")
+}
+
+// ─── Seller Profile ───────────────────────────────────────────────────────────
+model SellerProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tagline      String?
+  bio          String?
+  skills       String[]
+  languages    String[]
+  responseTime String   @default("1 hour")
+  rating       Float    @default(0)
+  reviewCount  Int      @default(0)
+  totalOrders  Int      @default(0)
+  earnings     Float    @default(0)
+  level        String   @default("new") // new | level1 | level2 | top | pro
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ─── Categories ───────────────────────────────────────────────────────────────
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?
+  subcategories SubCategory[]
+  gigs        Gig[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SubCategory {
+  id          String   @id @default(cuid())
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name        String
+  slug        String   @unique
+  description String?
+  gigs        Gig[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ─── Gig ──────────────────────────────────────────────────────────────────────
+model Gig {
+  id            String    @id @default(cuid())
+  sellerId      String
+  seller        User      @relation("SellerGigs", fields: [sellerId], references: [id], onDelete: Cascade)
+  title         String
+  description   String
+  categoryId    String
+  category      Category  @relation(fields: [categoryId], references: [id])
+  subcategoryId String?
+  subcategory   SubCategory? @relation(fields: [subcategoryId], references: [id])
+  tags          String[]
+  status        GigStatus @default(PENDING)
+  rating        Float     @default(0)
+  reviewCount   Int       @default(0)
+  orders        Int       @default(0)
+  featured      Boolean   @default(false)
+  bestSeller    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  packages      GigPackage[]
+  faqs          GigFAQ[]
+  requirements  GigRequirement[]
+  media         GigMedia[]
+  gigOrders     Order[]
+  reviews       Review[]
+  favorites     Favorite[] @relation("GigFavorites")
+}
+
+// ─── Gig Packages & Features ───────────────────────────────────────────────────
+model GigPackage {
+  id           String   @id @default(cuid())
+  gigId        String
+  gig          Gig      @relation(fields: [gigId], references: [id], onDelete: Cascade)
+  tier         String   // BASIC | STANDARD | PREMIUM
+  name         String
+  description  String
+  price        Float
+  deliveryDays Int
+  revisions    Int      // -1 for unlimited
+  features     String[] // Array of included features
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([gigId, tier])
+}
+
+model GigFAQ {
+  id          String   @id @default(cuid())
+  gigId       String
+  gig         Gig      @relation(fields: [gigId], references: [id], onDelete: Cascade)
+  question    String
+  answer      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model GigRequirement {
+  id          String   @id @default(cuid())
+  gigId       String
+  gig         Gig      @relation(fields: [gigId], references: [id], onDelete: Cascade)
+  question    String
+  type        String   // TEXT | FILE | MULTIPLE_CHOICE
+  required    Boolean  @default(true)
+  options     String[] // Used for MULTIPLE_CHOICE
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model GigMedia {
+  id          String   @id @default(cuid())
+  gigId       String
+  gig         Gig      @relation(fields: [gigId], references: [id], onDelete: Cascade)
+  url         String
+  type        String   // IMAGE | VIDEO | DOCUMENT
+  isPrimary   Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation("UserFavorites", fields: [userId], references: [id], onDelete: Cascade)
+  gigId     String
+  gig       Gig      @relation("GigFavorites", fields: [gigId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, gigId])
+}
+
+// ─── Order ────────────────────────────────────────────────────────────────────
+model Order {
+  id           String      @id @default(cuid())
+  gigId        String
+  gig          Gig         @relation(fields: [gigId], references: [id])
+  buyerId      String
+  buyer        User        @relation("BuyerOrders", fields: [buyerId], references: [id])
+  sellerId     String
+  seller       User        @relation("SellerOrders", fields: [sellerId], references: [id])
+  packageTier  String      // basic | standard | premium
+  price        Float
+  status       OrderStatus @default(PENDING)
+  requirements String?
+  deliverables String[]
+  dueDate      DateTime
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  review Review?
+}
+
+// ─── Review ───────────────────────────────────────────────────────────────────
+model Review {
+  id        String   @id @default(cuid())
+  orderId   String   @unique
+  order     Order    @relation(fields: [orderId], references: [id])
+  gigId     String
+  gig       Gig      @relation(fields: [gigId], references: [id])
+  buyerId   String
+  buyer     User     @relation("ReviewsByBuyer", fields: [buyerId], references: [id])
+  rating    Float
+  comment   String
+  createdAt DateTime @default(now())
+}
+
+// ─── Reports (Moderation) ─────────────────────────────────────────────────────
+model Report {
+  id         String           @id @default(cuid())
+  reporterId String
+  reporter   User             @relation("ReportsByUser", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetType ReportTargetType
+  targetId   String           // ID of the User / Gig / Message being reported
+  reason     String
+  details    String?
+  status     ReportStatus     @default(OPEN)
+  resolvedBy String?          // Admin user ID who resolved
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+}
+
+// ─── Messaging ────────────────────────────────────────────────────────────────
+model Conversation {
+  id           String                   @id @default(cuid())
+  participants ConversationParticipant[]
+  messages     Message[]
+  lastMessage  String?
+  updatedAt    DateTime                 @updatedAt
+  createdAt    DateTime                 @default(now())
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unreadCount    Int          @default(0)
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  text           String
+  read           Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+}
