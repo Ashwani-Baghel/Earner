@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { GigCard } from "@/components/gig/GigCard";
-import { GigCard } from "@/components/gig/GigCard";
+import { CATEGORIES } from "@/lib/mock-data/categories";
 import { ChevronRight, PlayCircle, Sparkles, Users, Search, FileText } from "lucide-react";
 
 export default function DashboardPage() {
