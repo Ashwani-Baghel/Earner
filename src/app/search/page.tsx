@@ -31,7 +31,7 @@ function SearchContent() {
   }, [filters, q, sort]);
 
   return (
-    <div className="container-fiverr py-8">
+    <div className="container-earner py-8">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#404145]">

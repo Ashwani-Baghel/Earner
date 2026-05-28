@@ -94,7 +94,7 @@ export default async function CategoryPage({ params, searchParams }: { params: P
         <div className="absolute right-24 bottom-0 w-[200px] h-[200px] bg-[#1dbf73]/20 rounded-t-full translate-y-1/3 pointer-events-none" />
         <div className="absolute left-1/2 top-8 w-[280px] h-[280px] border border-[#1dbf73]/20 rounded-full -translate-x-1/4 pointer-events-none" />
 
-        <div className="container-fiverr relative z-10 py-12">
+        <div className="container-earner relative z-10 py-12">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
             <span className="text-6xl">{cat.icon}</span>
             <div>
@@ -107,7 +107,7 @@ export default async function CategoryPage({ params, searchParams }: { params: P
 
       {/* ── Subcategory pills ── */}
       <div className="border-b border-[#e4e5e7] sticky top-[80px] bg-white z-30">
-        <div className="container-fiverr py-4">
+        <div className="container-earner py-4">
           <div className="flex flex-wrap gap-2">
             <Link
               href={`/categories/${cat.slug}`}
@@ -129,7 +129,7 @@ export default async function CategoryPage({ params, searchParams }: { params: P
       </div>
 
       {/* ── Gigs Grid ── */}
-      <div className="container-fiverr py-10">
+      <div className="container-earner py-10">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-[#404145]">
             {gigs.length > 0
@@ -167,7 +167,7 @@ export default async function CategoryPage({ params, searchParams }: { params: P
       {/* ── Explore Subcategories at bottom ── */}
       {cat.subcategories && cat.subcategories.length > 0 && (
         <div className="border-t border-[#e4e5e7] bg-[#fafafa]">
-          <div className="container-fiverr py-12">
+          <div className="container-earner py-12">
             <h2 className="text-xl font-bold text-[#404145] mb-8">
               Explore {cat.name}
             </h2>

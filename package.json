@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "NODE_OPTIONS=--max_old_space_size=8192 next dev",
+    "dev:next": "NODE_OPTIONS=--max_old_space_size=8192 next dev",
     "dev:chat": "cd chat-server && npm run dev",
-    "dev:all": "concurrently \"npm run dev\" \"npm run dev:chat\"",
+    "dev": "concurrently \"npm run dev:next\" \"npm run dev:chat\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

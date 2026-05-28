@@ -1,6 +1,6 @@
-# Earner - Freelance Marketplace (Fiverr Clone)
+# Earner - Freelance Marketplace (Earner)
 
-Earner is a modern, full-featured freelance marketplace platform inspired by Fiverr. It provides a robust dual-dashboard system for Buyers and Sellers, real-time messaging, comprehensive gig management, and secure authentication.
+Earner is a modern, full-featured freelance marketplace platform inspired by Earner. It provides a robust dual-dashboard system for Buyers and Sellers, real-time messaging, comprehensive gig management, and secure authentication.
 
 ---
 

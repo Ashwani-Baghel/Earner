@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params;
   const seller = getSellerByUsername(username);
   return {
-    title: seller ? `${seller.displayName} – Fiverr Clone` : "Seller Profile",
+    title: seller ? `${seller.displayName} – Earner` : "Seller Profile",
     description: seller?.tagline,
   };
 }
@@ -37,7 +37,7 @@ export default async function SellerPage({ params }: Props) {
   ];
 
   return (
-    <div className="container-fiverr py-8">
+    <div className="container-earner py-8">
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Sidebar */}
         <aside className="lg:w-72 xl:w-80 flex-shrink-0">

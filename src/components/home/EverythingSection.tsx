@@ -3,7 +3,7 @@ import Image from "next/image";
 export function EverythingSection() {
   return (
     <section className="bg-[#f1fdf7] py-24">
-      <div className="container-fiverr max-w-6xl">
+      <div className="container-earner max-w-6xl">
         <div className="flex flex-col lg:flex-row gap-16 items-center">
           <div className="flex-1">
             <h2 className="text-3xl md:text-4xl font-bold text-[#404145] mb-8 pb-4">

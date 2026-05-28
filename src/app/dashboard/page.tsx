@@ -101,7 +101,7 @@ export default function DashboardPage() {
           SECTION 2 — Explore Trending (4 big image cards)
           These groups pull from the popular database gigs dynamically
       ───────────────────────────────────────────────────────────────── */}
-      <div className="container-fiverr py-12">
+      <div className="container-earner py-12">
         <h2 className="text-2xl font-bold text-[#404145] mb-8">Explore our trending services</h2>
         {fetchingGigs ? (
           <div className="flex justify-center py-8"><div className="h-8 w-8 border-4 border-[#1dbf73] border-t-transparent rounded-full animate-spin" /></div>
@@ -140,7 +140,7 @@ export default function DashboardPage() {
           SECTION 3 — All Trending Gigs Grid (dynamic from gigs.ts)
       ───────────────────────────────────────────────────────────────── */}
       {trendingGigs.length > 0 && (
-        <div className="container-fiverr pb-12">
+        <div className="container-earner pb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-[#404145]">Services you may like</h2>
             <Link href="/search" className="text-sm text-[#1dbf73] hover:underline font-medium">See all services →</Link>
@@ -182,7 +182,7 @@ export default function DashboardPage() {
       {/* ──────────────────────────────────────────────────────────────────
           SECTION 5 — Find freelance talent your way (screenshot 3 middle)
       ───────────────────────────────────────────────────────────────── */}
-      <div className="container-fiverr py-14">
+      <div className="container-earner py-14">
         <h2 className="text-2xl font-bold text-[#404145] mb-8">Find freelance talent — your way</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
@@ -233,7 +233,7 @@ export default function DashboardPage() {
           SECTION 6 — Category Quick Browse
       ───────────────────────────────────────────────────────────────── */}
       <div className="bg-[#fafafa] border-t border-[#e4e5e7]">
-        <div className="container-fiverr py-12">
+        <div className="container-earner py-12">
           <h2 className="text-xl font-bold text-[#404145] mb-6">Browse by category</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {CATEGORIES.map(cat => (

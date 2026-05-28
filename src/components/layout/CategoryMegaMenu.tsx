@@ -17,7 +17,7 @@ export function CategoryMegaMenu({ category, onClose }: Props) {
       <div className="h-[3px] bg-[#1dbf73] w-full" />
 
       <div className="bg-white border-b border-[#e4e5e7] shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
-        <div className="container-fiverr py-8">
+        <div className="container-earner py-8">
           {/* Category header */}
           <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#e4e5e7]">
             <span className="text-3xl">{category.icon}</span>

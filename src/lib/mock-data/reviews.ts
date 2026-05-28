@@ -61,7 +61,7 @@ export const REVIEWS: Review[] = [
     gigId: "gig-5",
     reviewer: { uid: "u7", name: "Amelia Hayes", avatar: "https://api.dicebear.com/9.x/avataaars/svg?seed=amelia", country: "Australia" },
     rating: 5,
-    comment: "Best video editor I've worked with on Fiverr. Exceeded expectations in every way. Fast delivery and amazing attention to detail.",
+    comment: "Best video editor I've worked with on Earner. Exceeded expectations in every way. Fast delivery and amazing attention to detail.",
     createdAt: "2024-10-15",
     helpful: 22,
   },

@@ -22,7 +22,7 @@ const GUIDES = [
 export function GuidesSection() {
   return (
     <section className="py-24 bg-white">
-      <div className="container-fiverr max-w-6xl">
+      <div className="container-earner max-w-6xl">
         <div className="flex justify-between items-end mb-10">
           <h2 className="text-3xl md:text-4xl font-bold text-[#404145]">
             Guides to help you grow

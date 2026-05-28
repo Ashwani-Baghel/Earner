@@ -10,12 +10,12 @@ import { NotificationProvider } from "@/context/NotificationContext";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Fiverr Clone – Find the perfect freelance service",
+  title: "Earner – Find the perfect freelance service",
   description:
-    "Find, hire, and work with top freelancers. Fiverr clone built with Next.js 16, Firebase, and Tailwind CSS. Graphic design, web development, video, writing, and more.",
-  keywords: "freelance, fiverr clone, design, development, marketing, nextjs",
+    "Find, hire, and work with top freelancers. Earner built with Next.js 16, Firebase, and Tailwind CSS. Graphic design, web development, video, writing, and more.",
+  keywords: "freelance, Earner, design, development, marketing, nextjs",
   openGraph: {
-    title: "Fiverr Clone",
+    title: "Earner",
     description: "Find the perfect freelance service, right away.",
     type: "website",
   },

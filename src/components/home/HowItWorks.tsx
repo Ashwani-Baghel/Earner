@@ -27,7 +27,7 @@ const STEPS = [
 export function HowItWorks() {
   return (
     <section className="py-14 bg-[#fafafa]">
-      <div className="container-fiverr">
+      <div className="container-earner">
         <div className="text-center mb-10">
           <h2 className="text-2xl md:text-3xl font-bold text-[#404145] mb-3">Your go-to for exceptional results</h2>
           <p className="text-[#74767e] text-sm max-w-xl mx-auto">

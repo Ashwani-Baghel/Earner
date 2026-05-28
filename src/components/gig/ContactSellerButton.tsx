@@ -35,6 +35,7 @@ export function ContactSellerButton({ sellerId }: { sellerId: string }) {
       }
     } catch (e) {
       console.error(e);
+      alert("Unable to connect to the chat server. Please ensure it is running.");
     } finally {
       setLoading(false);
     }

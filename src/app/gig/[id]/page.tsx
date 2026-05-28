@@ -92,7 +92,7 @@ export default async function GigDetailPage({ params }: Props) {
 
   if (!gigRaw) {
     return (
-      <div className="container-fiverr py-24 flex flex-col items-center justify-center text-center">
+      <div className="container-earner py-24 flex flex-col items-center justify-center text-center">
         <h1 className="text-4xl font-bold text-[#404145] mb-4">Gig Not Found</h1>
         <p className="text-lg text-[#74767e] mb-8">The service you are looking for is no longer available or the link is incorrect.</p>
         <Link href="/" className="px-6 py-3 bg-[#1dbf73] text-white font-semibold rounded-lg hover:bg-[#19a463] transition-colors">
@@ -121,7 +121,7 @@ export default async function GigDetailPage({ params }: Props) {
     : "other";
 
   return (
-    <div className="container-fiverr py-8">
+    <div className="container-earner py-8">
       {/* Breadcrumb */}
       <nav className="text-xs text-[#74767e] mb-6 flex items-center gap-1">
         <Link href="/" className="hover:text-[#1dbf73]">Home</Link>
@@ -206,7 +206,7 @@ export default async function GigDetailPage({ params }: Props) {
           {/* Trust badges */}
           <div className="mt-4 rounded-xl border border-[#e4e5e7] p-4 space-y-3">
             {[
-              { icon: Shield, text: "Fiverr protects your payment until you approve the delivery" },
+              { icon: Shield, text: "Earner protects your payment until you approve the delivery" },
               { icon: RefreshCw, text: "Request free revisions within the agreed period" },
               { icon: MessageSquare, text: "24/7 customer support" },
             ].map(({ icon: Icon, text }) => (

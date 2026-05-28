@@ -18,7 +18,7 @@ export function PopularServices() {
 
   return (
     <section className="py-24 bg-white">
-      <div className="container-fiverr">
+      <div className="container-earner">
         <h2 className="text-3xl md:text-4xl font-bold text-slate-700 mb-12">
           Popular professional services
         </h2>

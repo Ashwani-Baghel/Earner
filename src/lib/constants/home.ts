@@ -194,30 +194,30 @@ export const FIVERR_PRO_FEATURES = [
   "Hire vetted freelance talent with confidence",
 ];
 
-// ── 9. SUCCESS STORIES: Carousel in "What success on Fiverr looks like"
+// ── 9. SUCCESS STORIES: Carousel in "What success on Earner looks like"
 export const SUCCESS_STORIES = [
   {
     id: "vontelle",
     company: "Vontelle Eyewear",
-    tagline: "Vontelle Eyewear turns to Fiverr freelancers to bring their vision to life.",
+    tagline: "Vontelle Eyewear turns to Earner freelancers to bring their vision to life.",
     quote:
-      "\"We've been able to get world-class talent at a reasonable cost. Fiverr helped us scale our marketing and brand faster than we ever imagined.\"",
+      "\"We've been able to get world-class talent at a reasonable cost. Earner helped us scale our marketing and brand faster than we ever imagined.\"",
     person: "Beatrice Dixon, CEO at Vontelle Eyewear",
     image: "https://picsum.photos/seed/vontelle-success/800/450",
   },
   {
     id: "speedify",
     company: "Speedify",
-    tagline: "How Speedify scaled content production with Fiverr.",
+    tagline: "How Speedify scaled content production with Earner.",
     quote:
-      "\"Fiverr transformed our content strategy. We scaled from 1 blog post per month to 30+ pieces of quality content weekly.\"",
+      "\"Earner transformed our content strategy. We scaled from 1 blog post per month to 30+ pieces of quality content weekly.\"",
     person: "John R., CMO at Speedify",
     image: "https://picsum.photos/seed/speedify-success/800/450",
   },
   {
     id: "growthhq",
     company: "GrowthHQ",
-    tagline: "GrowthHQ finds top-tier creative talent on Fiverr.",
+    tagline: "GrowthHQ finds top-tier creative talent on Earner.",
     quote:
       "\"We hired 12 freelancers across different disciplines and every single delivery exceeded our expectations.\"",
     person: "Marcus T., Founder at GrowthHQ",

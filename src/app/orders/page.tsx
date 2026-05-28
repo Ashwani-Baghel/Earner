@@ -30,7 +30,7 @@ export default function OrdersPage() {
   const filtered = tab === "all" ? ORDERS : ORDERS.filter((o) => o.status === tab);
 
   return (
-    <div className="container-fiverr py-8">
+    <div className="container-earner py-8">
       <h1 className="text-2xl font-bold text-[#404145] mb-2">My Orders</h1>
       <p className="text-sm text-[#74767e] mb-6">Track and manage your orders</p>
 
