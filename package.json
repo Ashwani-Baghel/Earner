@@ -7,6 +7,7 @@
     "dev:chat": "cd chat-server && npm run dev",
     "dev": "concurrently \"npm run dev:next\" \"npm run dev:chat\"",
     "build": "next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint"
   },
