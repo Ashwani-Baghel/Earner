@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { Suspense, useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Search, Bell, MessageSquare,
   ChevronDown, Globe, LogOut, User,
@@ -15,6 +15,16 @@ import { RegisterModal } from "../auth/RegisterModal";
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
 import { CategorySlider } from "./CategorySlider";
+
+function LoginQueryListener({ setLoginOpen, user }: { setLoginOpen: (v: boolean) => void, user: any }) {
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get("login") === "true" && !user) {
+      setLoginOpen(true);
+    }
+  }, [searchParams, user, setLoginOpen]);
+  return null;
+}
 
 export function Navbar() {
   const router = useRouter();
@@ -399,6 +409,9 @@ export function Navbar() {
       </header>
 
       {/* Modals */}
+      <Suspense fallback={null}>
+        <LoginQueryListener setLoginOpen={setLoginOpen} user={user} />
+      </Suspense>
       <LoginModal    open={loginOpen}    onClose={() => setLoginOpen(false)}    onSwitchToRegister={() => { setLoginOpen(false); setRegisterOpen(true); }} />
       <RegisterModal open={registerOpen} onClose={() => setRegisterOpen(false)} onSwitchToLogin={() => { setRegisterOpen(false); setLoginOpen(true); }} />
     </>

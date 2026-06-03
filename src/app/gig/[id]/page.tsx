@@ -11,6 +11,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { GigCard } from "@/components/gig/GigCard";
 import { ContactSellerButton } from "@/components/gig/ContactSellerButton";
+import { WishlistButton } from "@/components/gig/WishlistButton";
 import { getSellerLevelLabel, formatMemberSince } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 
@@ -188,6 +189,7 @@ export default async function GigDetailPage({ params }: Props) {
                     View Profile
                   </Link>
                   <ContactSellerButton sellerId={gig.seller.id} />
+                  <WishlistButton gigId={gig.id} />
                 </div>
               </div>
             </div>

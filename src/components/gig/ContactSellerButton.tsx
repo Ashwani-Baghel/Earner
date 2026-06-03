@@ -12,7 +12,7 @@ export function ContactSellerButton({ sellerId }: { sellerId: string }) {
 
   const handleContact = async () => {
     if (!user) {
-      router.push("/?login=true");
+      router.push("?login=true");
       return;
     }
     setLoading(true);
