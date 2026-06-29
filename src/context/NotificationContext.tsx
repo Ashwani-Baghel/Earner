@@ -1,12 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
-import { io, Socket } from "socket.io-client";
 import { Toast } from "../components/ui/Toast";
+import { db } from "@/lib/firebaseClient";
+import { collectionGroup, query, where, onSnapshot } from "firebase/firestore";
 
 interface NotificationContextType {
-  socket: Socket | null;
   unreadCount: number;
   decrementUnread: () => void;
   resetUnread: () => void;
@@ -14,7 +14,6 @@ interface NotificationContextType {
 }
 
 const NotificationContext = createContext<NotificationContextType>({
-  socket: null,
   unreadCount: 0,
   decrementUnread: () => {},
   resetUnread: () => {},
@@ -22,8 +21,6 @@ const NotificationContext = createContext<NotificationContextType>({
 });
 
 export const useNotification = () => useContext(NotificationContext);
-
-const CHAT_SERVER_URL = process.env.NEXT_PUBLIC_CHAT_SERVER_URL || "http://localhost:3001";
 
 interface ToastData {
   id: string;
@@ -35,86 +32,57 @@ interface ToastData {
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  const [socket, setSocket] = useState<Socket | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [toasts, setToasts] = useState<ToastData[]>([]);
-  const socketRef = useRef<Socket | null>(null);
 
-  const fetchUnreadCount = async () => {
-    if (!user) return;
-    try {
-      const token = await user.getIdToken();
-      const res = await fetch(`${CHAT_SERVER_URL}/api/conversations/unread-count`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUnreadCount(data.unreadCount);
-      }
-    } catch (err) {
-      console.error("Failed to fetch unread count:", err);
-    }
-  };
-
-  // Fetch initial unread count
   useEffect(() => {
-    if (!user || loading) return;
-    fetchUnreadCount();
-  }, [user, loading]);
-
-  // Connect socket and listen for notifications
-  useEffect(() => {
-    if (!user || loading) return;
+    if (!user || loading || !db) return;
 
     let isMounted = true;
 
-    const connectSocket = async () => {
-      const token = await user.getIdToken();
-      const newSocket = io(CHAT_SERVER_URL, {
-        auth: { token }
-      });
+    const q = query(
+      collectionGroup(db, "messages"),
+      where("recipientId", "==", user.uid)
+    );
 
-      newSocket.on("connect", () => {
-        console.log("Global Notification Socket Connected");
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!isMounted) return;
+      
+      let unread = 0;
+      snapshot.docs.forEach((docSnap) => {
+        if (docSnap.data().read === false) unread++;
       });
+      setUnreadCount(unread);
 
-      newSocket.on("new_message_notification", (data: any) => {
-        if (!isMounted) return;
-        
-        // If the user is on the /messages page and actively viewing THIS conversation, 
-        // the messages page will mark it as read. Otherwise, we increment unread and show toast.
-        // For simplicity, we just check if window.location contains the conversation ID
-        // or we just increment it. The messages page will call resetUnread when opened.
-        if (typeof window !== "undefined" && window.location.search.includes(data.conversationId)) {
-          // User is actively looking at this conversation, do nothing
-          return;
+      // Handle toasts for new messages
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === "added") {
+          const data = change.doc.data();
+          if (data.read === false) {
+            const convId = change.doc.ref.parent.parent?.id;
+            
+            // If actively viewing this conversation, skip toast
+            if (typeof window !== "undefined" && window.location.search.includes(convId || "")) {
+              return;
+            }
+
+            const newToast: ToastData = {
+              id: change.doc.id,
+              message: data.text || "You have a new message",
+              senderName: data.senderName || "New Message",
+              conversationId: convId || "",
+            };
+            setToasts(prev => [...prev, newToast]);
+          }
         }
-
-        setUnreadCount(prev => prev + 1);
-        
-        // Show Toast
-        const newToast: ToastData = {
-          id: Math.random().toString(36).substring(7),
-          message: data.text,
-          senderName: data.senderName,
-          senderAvatar: data.senderAvatar,
-          conversationId: data.conversationId,
-        };
-        
-        setToasts(prev => [...prev, newToast]);
       });
-
-      setSocket(newSocket);
-      socketRef.current = newSocket;
-    };
-
-    connectSocket();
+    }, (error) => {
+      console.error("Firestore Notification Listener Error:", error.message);
+    });
 
     return () => {
       isMounted = false;
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
+      unsubscribe();
     };
   }, [user, loading]);
 
@@ -124,10 +92,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const decrementUnread = () => setUnreadCount(prev => Math.max(0, prev - 1));
   const resetUnread = () => setUnreadCount(0);
-  const refreshUnreadCount = () => fetchUnreadCount();
+  const refreshUnreadCount = () => {};
 
   return (
-    <NotificationContext.Provider value={{ socket, unreadCount, decrementUnread, resetUnread, refreshUnreadCount }}>
+    <NotificationContext.Provider value={{ unreadCount, decrementUnread, resetUnread, refreshUnreadCount }}>
       {children}
       
       {/* Toast Container */}

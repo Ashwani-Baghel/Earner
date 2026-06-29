@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BasicInfoStep } from "./steps/BasicInfoStep";
 import { PricingStep } from "./steps/PricingStep";
 import { DescriptionFaqStep } from "./steps/DescriptionFaqStep";
@@ -49,6 +49,35 @@ const STEPS = ["Overview", "Pricing", "Description & FAQ", "Requirements", "Gall
 export function GigCreationWizard() {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<GigFormData>(defaultData);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load from local storage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("earner_gig_draft");
+    if (saved) {
+      try {
+        setFormData(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse saved gig draft", e);
+      }
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Save to local storage on change
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("earner_gig_draft", JSON.stringify(formData));
+    }
+  }, [formData, isLoaded]);
+
+  const clearForm = () => {
+    if (window.confirm("Are you sure you want to clear all gig details? This action cannot be undone.")) {
+      setFormData(defaultData);
+      localStorage.removeItem("earner_gig_draft");
+      setCurrentStep(0);
+    }
+  };
 
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
@@ -57,12 +86,15 @@ export function GigCreationWizard() {
     setFormData((prev) => ({ ...prev, ...updates }));
   };
 
+  if (!isLoaded) return null; // Prevent hydration flash
+
   return (
     <div className="bg-[#f7f7f7] min-h-screen pb-20">
       {/* Step Progress Bar */}
-      <div className="bg-white border-b border-[#e4e5e7] sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 overflow-x-auto">
-          <ul className="flex items-center min-w-max py-4">
+      <div className="bg-white border-b border-[#e4e5e7] sticky top-0 z-10 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-6">
+          <div className="overflow-x-auto no-scrollbar py-1 w-full">
+          <ul className="flex items-center min-w-max py-4 pr-4">
             {STEPS.map((step, idx) => (
               <li key={idx} className="flex items-center">
                 <div className={`flex items-center justify-center h-8 w-8 rounded-full border-2 text-sm font-bold transition-colors ${
@@ -80,10 +112,26 @@ export function GigCreationWizard() {
               </li>
             ))}
           </ul>
+          </div>
+          <button 
+            onClick={clearForm}
+            className="hidden md:flex flex-shrink-0 items-center justify-center px-5 py-2.5 text-sm font-semibold text-red-600 bg-red-50 border border-red-100 hover:bg-red-100 hover:border-red-200 rounded-lg transition-all shadow-sm"
+          >
+            Clear Details
+          </button>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto mt-8 px-4">
+      <div className="max-w-4xl mx-auto mt-6 px-4 flex md:hidden justify-end">
+        <button 
+          onClick={clearForm}
+          className="text-sm font-semibold text-red-600 hover:text-red-700 bg-red-50 px-4 py-2 rounded-lg border border-red-100 shadow-sm transition-all"
+        >
+          Clear Gig Details
+        </button>
+      </div>
+
+      <div className="max-w-4xl mx-auto mt-6 md:mt-10 px-4">
         <div className="bg-white rounded-lg border border-[#e4e5e7] p-6 sm:p-10">
           {currentStep === 0 && <BasicInfoStep data={formData} updateForm={updateForm} nextStep={nextStep} />}
           {currentStep === 1 && <PricingStep data={formData} updateForm={updateForm} nextStep={nextStep} prevStep={prevStep} />}

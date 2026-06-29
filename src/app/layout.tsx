@@ -6,6 +6,7 @@ import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { NotificationProvider } from "@/context/NotificationContext";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -25,13 +26,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen flex flex-col bg-white">
-        <AuthProvider>
-          <CartProvider>
-            <NotificationProvider>
-              <ConditionalLayout>{children}</ConditionalLayout>
-            </NotificationProvider>
-          </CartProvider>
-        </AuthProvider>
+        <CurrencyProvider>
+          <AuthProvider>
+            <CartProvider>
+              <NotificationProvider>
+                <ConditionalLayout>{children}</ConditionalLayout>
+              </NotificationProvider>
+            </CartProvider>
+          </AuthProvider>
+        </CurrencyProvider>
       </body>
     </html>
   );

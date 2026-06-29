@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Clock, CheckCircle, XCircle, Package, RotateCcw, AlertCircle } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/context/CurrencyContext";
 
 const ORDERS = [
   { id: "ORD-001", gigId: "gig-1", title: "I will design a modern minimalist logo", seller: "Alex Rivera", sellerUsername: "designpro_alex", image: "https://picsum.photos/seed/logo1/100/80", price: 75, status: "active", tier: "Standard", dueDate: "Apr 5, 2026", deliveryTime: 3 },
@@ -26,6 +26,7 @@ type TabKey = "all" | "active" | "delivered" | "completed";
 
 export default function OrdersPage() {
   const [tab, setTab] = useState<TabKey>("all");
+  const { formatPrice } = useCurrency();
 
   const filtered = tab === "all" ? ORDERS : ORDERS.filter((o) => o.status === tab);
 
@@ -86,7 +87,7 @@ export default function OrdersPage() {
                     </div>
 
                     <div className="flex items-center gap-6 mt-3 flex-wrap">
-                      <span className="text-sm font-bold text-[#404145]">{formatCurrency(order.price)}</span>
+                      <span className="text-sm font-bold text-[#404145]">{formatPrice(order.price)}</span>
                       <span className="text-xs text-[#74767e] flex items-center gap-1"><Clock size={12} /> Due: {order.dueDate}</span>
                       <span className="text-xs text-[#74767e]">Order #{order.id}</span>
                     </div>

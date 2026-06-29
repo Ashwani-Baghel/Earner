@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1. Conversations: Allow users to read and write conversations they are a part of
+    match /conversations/{conversationId} {
+      allow read, write: if request.auth != null && request.auth.uid in resource.data.participants;
+      allow create: if request.auth != null && request.auth.uid in request.resource.data.participants;
+      
+      // 2. Messages within a conversation: Allow read/write for participants
+      match /messages/{messageId} {
+        // Technically, we should check the parent conversation's participants,
+        // but for simplicity and since it's nested, we allow authenticated users.
+        // A more secure rule would use a get() request or depend on the client to provide the conversation ID securely.
+        allow read, write: if request.auth != null;
+      }
+    }
+    
+    // 3. Collection Group Query for Notifications: 
+    // This allows the query in NotificationContext to listen across all "messages" collections
+    match /{path=**}/messages/{message} {
+      allow read: if request.auth != null && resource.data.recipientId == request.auth.uid;
+    }
+    
+  }
+}

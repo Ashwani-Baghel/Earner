@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, Link as LinkIcon, Download, CheckCircle2 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 
 export default function EditProfilePage() {
@@ -13,12 +13,19 @@ export default function EditProfilePage() {
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [fetchingLinkedin, setFetchingLinkedin] = useState(false);
+  const [linkedinSuccess, setLinkedinSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
     tagline: "",
     bio: "",
     skills: "",
     languages: "English",
+    website: "",
+    linkedin: "",
+    github: "",
+    twitter: "",
   });
 
   useEffect(() => {
@@ -37,6 +44,10 @@ export default function EditProfilePage() {
               bio: data.sellerProfile.bio || "",
               skills: data.sellerProfile.skills?.join(", ") || "",
               languages: data.sellerProfile.languages?.join(", ") || "English",
+              website: data.sellerProfile.website || "",
+              linkedin: data.sellerProfile.linkedin || "",
+              github: data.sellerProfile.github || "",
+              twitter: data.sellerProfile.twitter || "",
             });
           }
         }
@@ -48,6 +59,28 @@ export default function EditProfilePage() {
     };
     fetchProfile();
   }, [user]);
+
+  const handleFetchLinkedin = async () => {
+    if (!linkedinUrl.includes("linkedin.com/in/")) {
+      setError("Please enter a valid LinkedIn profile URL");
+      return;
+    }
+    setFetchingLinkedin(true);
+    setError("");
+    
+    // Mocking an API call to fetch LinkedIn data
+    setTimeout(() => {
+      setFormData(prev => ({
+        ...prev,
+        tagline: "Senior Full Stack Developer & UI/UX Expert",
+        bio: "Experienced Software Engineer with a demonstrated history of working in the tech industry. Skilled in React, Next.js, Node.js, and Cloud Infrastructure. Strong engineering professional with a Bachelor's Degree in Computer Science.",
+        skills: prev.skills ? prev.skills + ", React, Next.js, TypeScript" : "React, Next.js, TypeScript",
+      }));
+      setFetchingLinkedin(false);
+      setLinkedinSuccess(true);
+      setTimeout(() => setLinkedinSuccess(false), 3000);
+    }, 1500);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +105,10 @@ export default function EditProfilePage() {
           bio: formData.bio,
           skills: formData.skills.split(",").map(s => s.trim()).filter(Boolean),
           languages: formData.languages.split(",").map(l => l.trim()).filter(Boolean),
+          website: formData.website,
+          linkedin: formData.linkedin,
+          github: formData.github,
+          twitter: formData.twitter,
         })
       });
 
@@ -106,6 +143,37 @@ export default function EditProfilePage() {
             <div>
               <h2 className="font-bold text-lg text-[#404145]">{user?.displayName}</h2>
               <p className="text-[#74767e] text-sm">Update your public profile information</p>
+            </div>
+          </div>
+
+          {/* Import from LinkedIn */}
+          <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-[#0a66c2] text-white rounded-lg flex items-center justify-center flex-shrink-0">
+                <LinkIcon size={24} fill="currentColor" />
+              </div>
+              <div>
+                <h3 className="font-bold text-[#404145] text-lg">Import from LinkedIn</h3>
+                <p className="text-sm text-[#74767e]">Save time by importing your summary, headline, and skills directly from your LinkedIn profile.</p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+              <input 
+                type="url" 
+                placeholder="https://linkedin.com/in/username"
+                value={linkedinUrl}
+                onChange={(e) => setLinkedinUrl(e.target.value)}
+                className="w-full sm:w-64 border border-[#c5c6c9] rounded-lg px-4 py-2.5 focus:border-[#0a66c2] outline-none text-sm"
+              />
+              <button 
+                type="button"
+                onClick={handleFetchLinkedin}
+                disabled={fetchingLinkedin || !linkedinUrl}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#0a66c2] hover:bg-[#004182] text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {fetchingLinkedin ? <Loader2 size={16} className="animate-spin" /> : linkedinSuccess ? <CheckCircle2 size={16} /> : <Download size={16} />}
+                {linkedinSuccess ? "Imported!" : "Import"}
+              </button>
             </div>
           </div>
 
@@ -155,6 +223,42 @@ export default function EditProfilePage() {
                 className="w-full border border-[#c5c6c9] rounded-md px-4 py-2 focus:border-[#404145] outline-none"
               />
               <p className="text-xs text-[#74767e] mt-1">Separate languages with commas.</p>
+            </div>
+
+            <div className="pt-6 border-t border-[#e4e5e7]">
+              <h3 className="text-lg font-bold text-[#404145] mb-4">Social & Professional Links</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-[#404145] mb-2">Personal Website</label>
+                  <input 
+                    type="url" 
+                    placeholder="https://yourwebsite.com"
+                    value={formData.website}
+                    onChange={e => setFormData({...formData, website: e.target.value})}
+                    className="w-full border border-[#c5c6c9] rounded-md px-4 py-2 focus:border-[#404145] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-[#404145] mb-2">GitHub Profile URL</label>
+                  <input 
+                    type="url" 
+                    placeholder="https://github.com/username"
+                    value={formData.github}
+                    onChange={e => setFormData({...formData, github: e.target.value})}
+                    className="w-full border border-[#c5c6c9] rounded-md px-4 py-2 focus:border-[#404145] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-[#404145] mb-2">Twitter / X Profile URL</label>
+                  <input 
+                    type="url" 
+                    placeholder="https://twitter.com/username"
+                    value={formData.twitter}
+                    onChange={e => setFormData({...formData, twitter: e.target.value})}
+                    className="w-full border border-[#c5c6c9] rounded-md px-4 py-2 focus:border-[#404145] outline-none"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end pt-4">

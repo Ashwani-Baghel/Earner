@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MapPin, Clock, Star, MessageSquare } from "lucide-react";
-import { getSellerByUsername } from "@/lib/mock-data/sellers";
+import { MapPin, Clock, Star, MessageSquare, Globe, Link as LinkIcon } from "lucide-react";
+import { getSellerByUsername, getSellerById } from "@/lib/mock-data/sellers";
 import { getGigsBySeller } from "@/lib/mock-data/gigs";
+import { prisma } from "@/lib/prisma";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { GigCard } from "@/components/gig/GigCard";
@@ -14,7 +15,21 @@ interface Props { params: Promise<{ username: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params;
-  const seller = getSellerByUsername(username);
+  
+  // Try Prisma first
+  const dbUser = await prisma.user.findFirst({
+    where: { OR: [{ id: username }, { name: username }] },
+    include: { sellerProfile: true }
+  });
+
+  if (dbUser && dbUser.sellerProfile) {
+    return {
+      title: `${dbUser.name} – Earner`,
+      description: dbUser.sellerProfile.tagline || `Profile of ${dbUser.name}`,
+    };
+  }
+
+  const seller = getSellerByUsername(username) || getSellerById(username);
   return {
     title: seller ? `${seller.displayName} – Earner` : "Seller Profile",
     description: seller?.tagline,
@@ -23,12 +38,69 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function SellerPage({ params }: Props) {
   const { username } = await params;
-  const seller = getSellerByUsername(username);
-  if (!seller) notFound();
+  
+  let seller: any = null;
+  let gigs: any[] = [];
+  let allGigs: any[] = [];
+  let level = { label: "New Seller" };
 
-  const gigs = getGigsBySeller(seller.uid);
-  const allGigs = gigs.length > 0 ? gigs : (await import("@/lib/mock-data/gigs")).GIGS.slice(0, 4);
-  const level = getSellerLevelLabel(seller.level);
+  // Try Prisma first
+  const dbUser = await prisma.user.findFirst({
+    where: { OR: [{ id: username }, { name: username }] },
+    include: { sellerProfile: true }
+  });
+
+  if (dbUser && dbUser.sellerProfile) {
+    const sp = dbUser.sellerProfile;
+    seller = {
+      uid: dbUser.id,
+      username: dbUser.name?.replace(/\s+/g, '') || "user",
+      displayName: dbUser.name,
+      avatar: dbUser.avatar,
+      tagline: sp.tagline,
+      description: sp.bio,
+      location: "Global",
+      memberSince: dbUser.createdAt.toISOString(),
+      responseTime: sp.responseTime || "1 hour",
+      languages: (sp.languages && sp.languages.length > 0) ? sp.languages.map(l => ({ name: l, level: "fluent" })) : [{ name: "English", level: "native" }],
+      skills: sp.skills || [],
+      education: [],
+      rating: sp.rating || 0,
+      reviewCount: sp.reviewCount || 0,
+      completedOrders: sp.totalOrders || 0,
+      level: sp.level || "new",
+      isOnline: true,
+      // Social Links
+      website: sp.website,
+      linkedin: sp.linkedin,
+      github: sp.github,
+      twitter: sp.twitter,
+    };
+
+    const dbGigs = await prisma.gig.findMany({
+      where: { sellerId: dbUser.id, status: "ACTIVE" },
+      include: { seller: true, category: true, packages: true, media: true }
+    });
+    
+    // Map to the expected mock format roughly
+    allGigs = dbGigs.map(g => ({
+      ...g,
+      category: g.categoryId,
+      seller: { ...g.seller, displayName: g.seller.name, username: g.seller.name },
+      images: g.media.map(m => m.url),
+      rating: 0,
+      reviewCount: 0,
+    }));
+    
+    level = getSellerLevelLabel(sp.level);
+  } else {
+    // Fallback to mock
+    seller = getSellerByUsername(username) || getSellerById(username);
+    if (!seller) notFound();
+    gigs = getGigsBySeller(seller.uid);
+    allGigs = gigs.length > 0 ? gigs : (await import("@/lib/mock-data/gigs")).GIGS.slice(0, 4);
+    level = getSellerLevelLabel(seller.level);
+  }
 
   const stats = [
     { label: "Completed", value: formatNumber(seller.completedOrders) },
@@ -73,10 +145,39 @@ export default async function SellerPage({ params }: Props) {
               <div className="flex items-center gap-2"><Star size={14} className="text-[#ffbe00]" /> {seller.rating} ({seller.reviewCount} reviews)</div>
             </div>
 
+            {/* Social Links */}
+            {(seller.website || seller.linkedin || seller.github || seller.twitter) && (
+              <div className="mt-5 pt-5 border-t border-[#e4e5e7]">
+                <h3 className="font-semibold text-sm text-[#404145] mb-3">Links</h3>
+                <div className="space-y-3">
+                  {seller.website && (
+                    <a href={seller.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-[#74767e] hover:text-[#1dbf73] transition-colors">
+                      <Globe size={16} /> Personal Website
+                    </a>
+                  )}
+                  {seller.linkedin && (
+                    <a href={seller.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-[#74767e] hover:text-[#1dbf73] transition-colors">
+                      <LinkIcon size={16} /> LinkedIn
+                    </a>
+                  )}
+                  {seller.github && (
+                    <a href={seller.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-[#74767e] hover:text-[#1dbf73] transition-colors">
+                      <LinkIcon size={16} /> GitHub
+                    </a>
+                  )}
+                  {seller.twitter && (
+                    <a href={seller.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-[#74767e] hover:text-[#1dbf73] transition-colors">
+                      <LinkIcon size={16} /> Twitter
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Languages */}
             <div className="mt-5 pt-5 border-t border-[#e4e5e7]">
               <h3 className="font-semibold text-sm text-[#404145] mb-2">Languages</h3>
-              {seller.languages.map((lang) => (
+              {seller.languages.map((lang: any) => (
                 <div key={lang.name} className="flex items-center justify-between mt-1">
                   <span className="text-sm text-[#404145]">{lang.name}</span>
                   <span className="text-xs text-[#74767e] capitalize">{lang.level}</span>
@@ -88,7 +189,7 @@ export default async function SellerPage({ params }: Props) {
             <div className="mt-5 pt-5 border-t border-[#e4e5e7]">
               <h3 className="font-semibold text-sm text-[#404145] mb-3">Skills</h3>
               <div className="flex flex-wrap gap-1.5">
-                {seller.skills.map((skill) => (
+                {seller.skills.map((skill: string) => (
                   <span key={skill} className="px-2 py-0.5 bg-[#fafafa] border border-[#e4e5e7] rounded-full text-xs text-[#404145]">{skill}</span>
                 ))}
               </div>

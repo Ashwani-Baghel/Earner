@@ -188,7 +188,7 @@ export default async function GigDetailPage({ params }: Props) {
                   <Link href={`/seller/${gig.seller.username}`} className="px-4 py-2 border border-[#404145] text-[#404145] rounded-lg text-sm font-semibold hover:bg-[#404145] hover:text-white transition-all">
                     View Profile
                   </Link>
-                  <ContactSellerButton sellerId={gig.seller.id} />
+                  <ContactSellerButton sellerId={gig.seller.id} sellerName={gig.seller.displayName} sellerAvatar={gig.seller.avatar} />
                   <WishlistButton gigId={gig.id} />
                 </div>
               </div>

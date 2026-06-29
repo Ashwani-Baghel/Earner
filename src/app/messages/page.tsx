@@ -4,9 +4,10 @@ import { useEffect, useState, useRef, Suspense } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useNotification } from "@/context/NotificationContext";
-import { io, Socket } from "socket.io-client";
 import { Avatar } from "@/components/ui/Avatar";
 import { Send, Loader2, Search, ArrowLeft, MessageSquare } from "lucide-react";
+import { db } from "@/lib/firebaseClient";
+import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, updateDoc, doc, writeBatch } from "firebase/firestore";
 
 interface User {
   id: string;
@@ -29,8 +30,6 @@ interface Message {
   createdAt: string;
 }
 
-const CHAT_SERVER_URL = process.env.NEXT_PUBLIC_CHAT_SERVER_URL || "http://localhost:3001";
-
 function MessagesContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -42,118 +41,107 @@ function MessagesContent() {
   const [activeConv, setActiveConv] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const [otherTyping, setOtherTyping] = useState(false);
   
-  const socketRef = useRef<Socket | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!loading && !user) router.push("/");
   }, [user, loading, router]);
 
-  // Fetch initial conversations
+  // Listen to conversations
   useEffect(() => {
-    if (!user) return;
-    const fetchConversations = async () => {
-      try {
-        const token = await user.getIdToken();
-        const res = await fetch(`${CHAT_SERVER_URL}/api/conversations`, {
-          headers: { Authorization: `Bearer ${token}` }
+    if (!user || !db) return;
+    
+    const q = query(
+      collection(db, "conversations"),
+      where("participants", "array-contains", user.uid)
+    );
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const convs: Conversation[] = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        convs.push({
+          id: docSnap.id,
+          lastMessage: data.lastMessage || null,
+          updatedAt: data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
+          participants: (data.participants || []).map((uid: string) => ({
+            userId: uid,
+            user: {
+              id: uid,
+              name: data.participantDetails?.[uid]?.name || "User",
+              avatar: data.participantDetails?.[uid]?.avatar || null
+            }
+          }))
         });
-        if (res.ok) {
-          const data = await res.json();
-          setConversations(data);
-          if (targetConvId) {
-            const target = data.find((conv: Conversation) => conv.id === targetConvId);
-            if (target) setActiveConv(target);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to load conversations");
+      });
+      
+      // Sort by updatedAt desc
+      convs.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+      
+      setConversations(convs);
+      
+      if (targetConvId) {
+        const target = convs.find(c => c.id === targetConvId);
+        if (target) setActiveConv(target);
       }
-    };
-    fetchConversations();
-  }, [user]);
+    }, (error) => {
+      console.error("Firestore Conversations Listener Error:", error.message);
+    });
 
-  // Connect to Socket.io
+    return () => unsubscribe();
+  }, [user, targetConvId]);
+
+  // Listen to active conversation messages
   useEffect(() => {
-    if (!user) return;
-    let isMounted = true;
+    if (!user || !activeConv || !db) return;
 
-    const connectSocket = async () => {
-      const token = await user.getIdToken();
-      const socket = io(CHAT_SERVER_URL, {
-        auth: { token }
-      });
+    const messagesRef = collection(db, "conversations", activeConv.id, "messages");
+    const q = query(messagesRef, orderBy("createdAt", "asc"));
 
-      socket.on("connect", () => {
-        console.log("Connected to chat server");
-      });
-
-      socket.on("receive_message", (msg: Message) => {
-        if (!isMounted) return;
-        setMessages(prev => [...prev, msg]);
-        // Also update the lastMessage in conversations list
-        setConversations(prev => prev.map(c => 
-          c.id === msg.conversationId 
-            ? { ...c, lastMessage: msg.text, updatedAt: msg.createdAt } 
-            : c
-        ).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()));
-      });
-
-      socket.on("typing", ({ userId, isTyping }) => {
-        if (!isMounted) return;
-        // Basic typing indicator
-        if (userId !== user.uid) {
-          setOtherTyping(isTyping);
-        }
-      });
-
-      socketRef.current = socket;
-    };
-
-    connectSocket();
-
-    return () => {
-      isMounted = false;
-      if (socketRef.current) socketRef.current.disconnect();
-    };
-  }, [user]);
-
-  // Fetch messages when selecting a conversation
-  useEffect(() => {
-    if (!user || !activeConv) return;
-    const fetchMessages = async () => {
-      try {
-        const token = await user.getIdToken();
-        const res = await fetch(`${CHAT_SERVER_URL}/api/conversations/${activeConv.id}/messages`, {
-          headers: { Authorization: `Bearer ${token}` }
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const msgs: Message[] = [];
+      const unreadDocs: any[] = [];
+      
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        msgs.push({
+          id: docSnap.id,
+          conversationId: activeConv.id,
+          senderId: data.senderId,
+          text: data.text,
+          createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString()
         });
-        if (res.ok) {
-          setMessages(await res.json());
-          // The server marks these messages as read, so refresh global unread count
-          refreshUnreadCount();
+        
+        // Collect unread messages to mark as read
+        if (data.read === false && data.senderId !== user.uid) {
+          unreadDocs.push(docSnap.ref);
         }
-      } catch (err) {
-        console.error("Failed to load messages");
+      });
+      
+      setMessages(msgs);
+      
+      // Mark as read
+      if (unreadDocs.length > 0) {
+        const batch = writeBatch(db!);
+        unreadDocs.forEach(ref => {
+          batch.update(ref, { read: true });
+        });
+        batch.commit()
+          .then(() => refreshUnreadCount())
+          .catch(console.error);
       }
-    };
+    }, (error) => {
+      console.error("Firestore Messages Listener Error:", error.message);
+    });
 
-    fetchMessages();
-    setOtherTyping(false);
-
-    // Join room
-    if (socketRef.current) {
-      socketRef.current.emit("join_conversation", activeConv.id);
-    }
-  }, [activeConv, user]);
+    return () => unsubscribe();
+  }, [activeConv, user, refreshUnreadCount]);
 
   // Auto-scroll
   useEffect(() => {
     if (messagesContainerRef.current) {
-      // Smoothly scroll container to bottom
       messagesContainerRef.current.scrollTo({
         top: messagesContainerRef.current.scrollHeight,
         behavior: "smooth"
@@ -161,36 +149,40 @@ function MessagesContent() {
     }
   }, [messages, otherTyping]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !activeConv || !socketRef.current) return;
+    if (!newMessage.trim() || !activeConv || !user || !db) return;
 
-    socketRef.current.emit("send_message", {
-      conversationId: activeConv.id,
-      text: newMessage.trim()
-    });
+    const text = newMessage.trim();
+    setNewMessage(""); // optimistic clear
+    
+    // Find recipient
+    const recipient = activeConv.participants.find(p => p.userId !== user.uid);
+    const recipientId = recipient ? recipient.userId : "";
 
-    setNewMessage("");
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    socketRef.current.emit("typing", { conversationId: activeConv.id, isTyping: false });
+    try {
+      const convRef = doc(db, "conversations", activeConv.id);
+      const messagesRef = collection(convRef, "messages");
+      
+      await addDoc(messagesRef, {
+        senderId: user.uid,
+        recipientId: recipientId,
+        text,
+        read: false,
+        createdAt: serverTimestamp()
+      });
+      
+      await updateDoc(convRef, {
+        lastMessage: text,
+        updatedAt: serverTimestamp()
+      });
+    } catch (err) {
+      console.error("Failed to send message", err);
+    }
   };
 
   const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMessage(e.target.value);
-    
-    if (!activeConv || !socketRef.current) return;
-    
-    if (!isTyping) {
-      setIsTyping(true);
-      socketRef.current.emit("typing", { conversationId: activeConv.id, isTyping: true });
-    }
-
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    
-    typingTimeoutRef.current = setTimeout(() => {
-      setIsTyping(false);
-      socketRef.current?.emit("typing", { conversationId: activeConv.id, isTyping: false });
-    }, 1500);
   };
 
   if (loading || !user) return (

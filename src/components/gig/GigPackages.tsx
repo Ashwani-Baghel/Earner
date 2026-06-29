@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Check, Clock, RefreshCw } from "lucide-react";
 import type { Gig, PackageTier } from "../../lib/types";
 import { Button } from "../ui/Button";
-import { formatCurrency } from "../../lib/utils";
+import { useCurrency } from "../../context/CurrencyContext";
 import { useCart } from "../../context/CartContext";
 
 interface GigPackagesProps {
@@ -13,6 +13,7 @@ interface GigPackagesProps {
 export function GigPackages({ gig }: GigPackagesProps) {
   const [activeTier, setActiveTier] = useState<PackageTier>("basic");
   const { addToCart } = useCart();
+  const { formatPrice } = useCurrency();
 
   const tiers: PackageTier[] = ["basic", "standard", "premium"];
   const pkg = gig?.packages?.[activeTier];
@@ -47,7 +48,7 @@ export function GigPackages({ gig }: GigPackagesProps) {
       <div className="p-5">
         <div className="flex items-start justify-between mb-3">
           <h3 className="font-bold text-[#404145]">{pkg.name}</h3>
-          <span className="text-2xl font-bold text-[#404145]">{formatCurrency(pkg.price)}</span>
+          <span className="text-2xl font-bold text-[#404145]">{formatPrice(pkg.price)}</span>
         </div>
         <p className="text-sm text-[#74767e] mb-4 leading-relaxed">{pkg.description}</p>
 
@@ -76,7 +77,7 @@ export function GigPackages({ gig }: GigPackagesProps) {
           size="lg"
           onClick={() => addToCart(gig, activeTier)}
         >
-          Continue ({formatCurrency(pkg.price)})
+          Continue ({formatPrice(pkg.price)})
         </Button>
         <Button variant="outline" className="w-full" size="md">
           Compare Packages

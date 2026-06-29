@@ -88,6 +88,13 @@ model SellerProfile {
   totalOrders  Int      @default(0)
   earnings     Float    @default(0)
   level        String   @default("new") // new | level1 | level2 | top | pro
+  
+  // Social Links
+  website      String?
+  linkedin     String?
+  github       String?
+  twitter      String?
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

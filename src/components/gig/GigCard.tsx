@@ -6,7 +6,7 @@ import type { Gig } from "../../lib/types";
 import { StarRating } from "../ui/StarRating";
 import { Badge } from "../ui/Badge";
 import { Avatar } from "../ui/Avatar";
-import { formatCurrency } from "../../lib/utils";
+import { useCurrency } from "../../context/CurrencyContext";
 
 interface GigCardProps {
   gig: Gig;
@@ -14,6 +14,7 @@ interface GigCardProps {
 }
 
 export function GigCard({ gig, className }: GigCardProps) {
+  const { formatPrice } = useCurrency();
   return (
     <div className={`group bg-white rounded-lg border border-[#e4e5e7] overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ${className ?? ""}`}>
       {/* Thumbnail */}
@@ -75,7 +76,7 @@ export function GigCard({ gig, className }: GigCardProps) {
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#e4e5e7]">
           <span className="text-xs text-[#74767e]">Starting at</span>
           <span className="text-base font-bold text-[#404145]">
-            {formatCurrency(gig.packages.basic.price)}
+            {formatPrice(gig.packages.basic.price)}
           </span>
         </div>
       </div>

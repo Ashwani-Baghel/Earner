@@ -14,6 +14,7 @@ import { RegisterModal } from "../auth/RegisterModal";
 
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
+import { useCurrency, COUNTRIES } from "../../context/CurrencyContext";
 import { CategorySlider } from "./CategorySlider";
 
 function LoginQueryListener({ setLoginOpen, user }: { setLoginOpen: (v: boolean) => void, user: any }) {
@@ -36,8 +37,11 @@ export function Navbar() {
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [countryMenuOpen, setCountryMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const countryMenuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const { selectedCountry, setSelectedCountry } = useCurrency();
 
   const isSellerView = user?.role === "SELLER" && pathname.startsWith("/seller");
   const dashboardHref =
@@ -57,6 +61,8 @@ export function Navbar() {
     const onClick = (e: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node))
         setUserMenuOpen(false);
+      if (countryMenuRef.current && !countryMenuRef.current.contains(e.target as Node))
+        setCountryMenuOpen(false);
     };
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
@@ -182,11 +188,36 @@ export function Navbar() {
             <div className="flex items-center shrink-0">
               <div className="hidden lg:flex items-center gap-5 text-[13px] font-semibold text-slate-600">
 
-                {/* Language (buyer only) */}
+                {/* Country/Currency Selector (buyer only) */}
                 {!isSellerView && (
-                  <button className="flex items-center gap-1.5 hover:text-teal-600 transition-colors">
-                    <Globe size={16} /> English
-                  </button>
+                  <div className="relative" ref={countryMenuRef}>
+                    <button
+                      onClick={() => setCountryMenuOpen(!countryMenuOpen)}
+                      className="flex items-center gap-1.5 hover:text-teal-600 transition-colors"
+                    >
+                      <Globe size={16} /> {selectedCountry.name} ({selectedCountry.currency})
+                    </button>
+                    {countryMenuOpen && (
+                      <div className="absolute right-0 top-full mt-3 w-56 bg-white border border-slate-200 shadow-2xl rounded-xl py-2 z-50">
+                        {COUNTRIES.map((country) => (
+                          <button
+                            key={country.code}
+                            onClick={() => {
+                              setSelectedCountry(country.code);
+                              setCountryMenuOpen(false);
+                            }}
+                            className={`w-full text-left px-5 py-2.5 text-sm font-medium transition-colors hover:bg-slate-50 ${
+                              selectedCountry.code === country.code
+                                ? "text-teal-600 bg-slate-50"
+                                : "text-slate-700"
+                            }`}
+                          >
+                            {country.name} ({country.currency})
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {/* Not logged in */}

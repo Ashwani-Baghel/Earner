@@ -41,7 +41,7 @@ function BuyerDashboardContent() {
 
   /* ── Fetch real gigs from DB ── */
   const fetchGigs = async () => {
-    if (!user || !user.hasRole) return;
+    if (!user) return;
     if (user.role === "SELLER") {
       setFetching(false);
       return;

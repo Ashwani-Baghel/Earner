@@ -3,9 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev:next": "NODE_OPTIONS=--max_old_space_size=8192 next dev",
-    "dev:chat": "cd chat-server && npm run dev",
-    "dev": "concurrently \"npm run dev:next\" \"npm run dev:chat\"",
+    "dev": "NODE_OPTIONS=--max_old_space_size=8192 next dev",
     "build": "next build",
     "postinstall": "prisma generate",
     "start": "next start",
@@ -15,6 +13,7 @@
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.8.0",
     "@types/pg": "^8.20.0",
+    "date-fns": "^4.4.0",
     "dotenv": "^17.4.2",
     "firebase": "^12.11.0",
     "firebase-admin": "^10.3.0",
@@ -24,8 +23,7 @@
     "prisma": "^7.8.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "recharts": "^3.8.1",
-    "socket.io-client": "^4.8.3"
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

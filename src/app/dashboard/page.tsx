@@ -48,7 +48,7 @@ export default function DashboardPage() {
             slug: catName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
             color: colors[idx % colors.length],
             image: gigsInCat[0]?.images?.[0] || `https://picsum.photos/seed/${idx}/400/300`,
-            links: gigsInCat.slice(0, 5).map(g => g.title.replace(/I will /i, "").replace(/^./, s => s.toUpperCase())),
+            links: gigsInCat.slice(0, 5).map(g => g.title.replace(/I will /i, "").replace(/^./, (s: string) => s.toUpperCase())),
           }));
           setDynamicGroups(groups);
         }
