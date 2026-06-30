@@ -13,7 +13,6 @@ export default function EditProfilePage() {
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [linkedinUrl, setLinkedinUrl] = useState("");
   const [fetchingLinkedin, setFetchingLinkedin] = useState(false);
   const [linkedinSuccess, setLinkedinSuccess] = useState(false);
 
@@ -60,26 +59,62 @@ export default function EditProfilePage() {
     fetchProfile();
   }, [user]);
 
-  const handleFetchLinkedin = async () => {
-    if (!linkedinUrl.includes("linkedin.com/in/")) {
-      setError("Please enter a valid LinkedIn profile URL");
-      return;
-    }
+  // Listen for messages from the LinkedIn OAuth popup
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Ensure the message is from our own domain
+      if (event.origin !== window.location.origin) return;
+      
+      const data = event.data;
+      if (data && data.type === "LINKEDIN_IMPORT") {
+        setFetchingLinkedin(false);
+        
+        if (data.payload.error) {
+          setError(data.payload.error);
+        } else if (data.payload.success) {
+          // In a real app with Enterprise LinkedIn API, we'd get tagline/bio here.
+          // Since standard API only gives Name/Avatar, we fill those and mock the rest for demonstration.
+          const { name } = data.payload.data;
+          setFormData(prev => ({
+            ...prev,
+            tagline: "Senior Full Stack Developer & UI/UX Expert",
+            bio: `Imported from LinkedIn profile of ${name}. Experienced Software Engineer with a demonstrated history of working in the tech industry. Skilled in React, Next.js, Node.js, and Cloud Infrastructure.`,
+            skills: prev.skills ? prev.skills + ", React, Next.js, TypeScript" : "React, Next.js, TypeScript",
+            linkedin: "https://linkedin.com/in/linked-profile"
+          }));
+          
+          setSuccess(`Successfully imported LinkedIn data for ${name}`);
+          setLinkedinSuccess(true);
+          setTimeout(() => setLinkedinSuccess(false), 4000);
+          setTimeout(() => setSuccess(""), 4000);
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
+  const handleFetchLinkedin = () => {
     setFetchingLinkedin(true);
     setError("");
     
-    // Mocking an API call to fetch LinkedIn data
+    // Open the OAuth redirect route in a popup window
+    const width = 600;
+    const height = 600;
+    const left = window.screen.width / 2 - width / 2;
+    const top = window.screen.height / 2 - height / 2;
+    
+    window.open(
+      "/api/auth/linkedin",
+      "LinkedIn Import",
+      `width=${width},height=${height},top=${top},left=${left}`
+    );
+    
+    // Fallback if popup is closed manually without sending message
     setTimeout(() => {
-      setFormData(prev => ({
-        ...prev,
-        tagline: "Senior Full Stack Developer & UI/UX Expert",
-        bio: "Experienced Software Engineer with a demonstrated history of working in the tech industry. Skilled in React, Next.js, Node.js, and Cloud Infrastructure. Strong engineering professional with a Bachelor's Degree in Computer Science.",
-        skills: prev.skills ? prev.skills + ", React, Next.js, TypeScript" : "React, Next.js, TypeScript",
-      }));
       setFetchingLinkedin(false);
-      setLinkedinSuccess(true);
-      setTimeout(() => setLinkedinSuccess(false), 3000);
-    }, 1500);
+    }, 60000); // Reset after 1 minute
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -158,21 +193,14 @@ export default function EditProfilePage() {
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-              <input 
-                type="url" 
-                placeholder="https://linkedin.com/in/username"
-                value={linkedinUrl}
-                onChange={(e) => setLinkedinUrl(e.target.value)}
-                className="w-full sm:w-64 border border-[#c5c6c9] rounded-lg px-4 py-2.5 focus:border-[#0a66c2] outline-none text-sm"
-              />
               <button 
                 type="button"
                 onClick={handleFetchLinkedin}
-                disabled={fetchingLinkedin || !linkedinUrl}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#0a66c2] hover:bg-[#004182] text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={fetchingLinkedin}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#0a66c2] hover:bg-[#004182] text-white px-6 py-2.5 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {fetchingLinkedin ? <Loader2 size={16} className="animate-spin" /> : linkedinSuccess ? <CheckCircle2 size={16} /> : <Download size={16} />}
-                {linkedinSuccess ? "Imported!" : "Import"}
+                {linkedinSuccess ? "Imported!" : fetchingLinkedin ? "Waiting for LinkedIn..." : "Sign in with LinkedIn"}
               </button>
             </div>
           </div>

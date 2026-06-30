@@ -24,7 +24,7 @@ const footerSections = [
       { label: "Careers", href: "#" },
       { label: "Press & News", href: "#" },
       { label: "Partnerships", href: "#" },
-      { label: "Privacy Policy", href: "#" },
+      { label: "Privacy Policy", href: "/privacy" },
       { label: "Terms of Service", href: "#" },
       { label: "Intellectual Property Claims", href: "#" },
       { label: "Investor Relations", href: "#" },
