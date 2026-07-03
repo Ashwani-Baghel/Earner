@@ -7,6 +7,14 @@ export function formatPrice(price: number): string {
 }
 
 // Removed formatCurrency: use `useCurrency().formatPrice` from CurrencyContext instead.
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
 
 export function formatDelivery(days: number): string {
   if (days === 1) return "1 day delivery";

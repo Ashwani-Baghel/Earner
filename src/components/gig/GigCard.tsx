@@ -6,7 +6,8 @@ import type { Gig } from "../../lib/types";
 import { StarRating } from "../ui/StarRating";
 import { Badge } from "../ui/Badge";
 import { Avatar } from "../ui/Avatar";
-import { useCurrency } from "../../context/CurrencyContext";
+import { formatCurrency } from "../../lib/utils";
+import { useFavorites } from "../../context/FavoritesContext";
 
 interface GigCardProps {
   gig: Gig;
@@ -14,7 +15,9 @@ interface GigCardProps {
 }
 
 export function GigCard({ gig, className }: GigCardProps) {
-  const { formatPrice } = useCurrency();
+  const { favoriteIds, toggleFavorite } = useFavorites();
+  const isFavorite = favoriteIds.includes(gig.id);
+
   return (
     <div className={`group bg-white rounded-lg border border-[#e4e5e7] overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ${className ?? ""}`}>
       {/* Thumbnail */}
@@ -38,11 +41,16 @@ export function GigCard({ gig, className }: GigCardProps) {
 
         {/* Wishlist button */}
         <button
-          className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 transition-all duration-200 text-[#74767e] hover:text-red-500"
-          aria-label="Save to wishlist"
-          onClick={(e) => e.preventDefault()}
+          className={`absolute top-2 right-2 p-1.5 rounded-full transition-all duration-200 ${
+            isFavorite ? "bg-white opacity-100 text-red-500" : "bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 text-[#74767e] hover:text-red-500"
+          }`}
+          aria-label={isFavorite ? "Remove from wishlist" : "Save to wishlist"}
+          onClick={(e) => {
+            e.preventDefault();
+            toggleFavorite(gig.id);
+          }}
         >
-          <Heart size={16} />
+          <Heart size={16} fill={isFavorite ? "currentColor" : "none"} />
         </button>
       </Link>
 
@@ -76,7 +84,7 @@ export function GigCard({ gig, className }: GigCardProps) {
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#e4e5e7]">
           <span className="text-xs text-[#74767e]">Starting at</span>
           <span className="text-base font-bold text-[#404145]">
-            {formatPrice(gig.packages.basic.price)}
+            {formatCurrency(gig.packages.basic.price)}
           </span>
         </div>
       </div>

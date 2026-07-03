@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { NotificationProvider } from "@/context/NotificationContext";
-import { CurrencyProvider } from "@/context/CurrencyContext";
+import { FavoritesProvider } from "@/context/FavoritesContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -26,15 +27,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen flex flex-col bg-white">
-        <CurrencyProvider>
-          <AuthProvider>
-            <CartProvider>
-              <NotificationProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            <FavoritesProvider>
+              <CartProvider>
                 <ConditionalLayout>{children}</ConditionalLayout>
-              </NotificationProvider>
-            </CartProvider>
-          </AuthProvider>
-        </CurrencyProvider>
+              </CartProvider>
+            </FavoritesProvider>
+          </NotificationProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -199,7 +199,7 @@ export default function DashboardPage() {
               desc: "Save the endless search — we'll source, interview, and vet freelancers for you.",
               cta: "Get started",
               ctaStyle: "border",
-              sub: "Only ₹8,714",
+              sub: "Only $110",
             },
             {
               icon: Users,

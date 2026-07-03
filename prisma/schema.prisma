@@ -234,6 +234,7 @@ model Order {
   dueDate      DateTime
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+  paymentIntentId String?  @unique
 
   review Review?
 }

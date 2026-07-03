@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Search, RefreshCw, Ban, CheckCircle, Trash2, Shield, UserCheck } from "lucide-react";
+import { Search, RefreshCw, Ban, CheckCircle, Trash2, Shield, UserCheck, Plus, X, Loader2 } from "lucide-react";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 
@@ -26,6 +26,38 @@ export default function AdminUsersPage() {
   const [q, setQ]               = useState("");
   const [confirm, setConfirm]   = useState<{ action: string; target: AdminUser; extra?: string } | null>(null);
   const [actioning, setActioning] = useState(false);
+
+  const [addAdminOpen, setAddAdminOpen] = useState(false);
+  const [addAdminForm, setAddAdminForm] = useState({ email: "", password: "" });
+  const [addingAdmin, setAddingAdmin] = useState(false);
+  const [addAdminError, setAddAdminError] = useState("");
+
+  const handleAddAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddingAdmin(true);
+    setAddAdminError("");
+    try {
+      const token = await user?.getIdToken();
+      const res = await fetch("/api/admin/create-admin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(addAdminForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create admin");
+      
+      setAddAdminOpen(false);
+      setAddAdminForm({ email: "", password: "" });
+      fetchUsers();
+    } catch (err: any) {
+      setAddAdminError(err.message);
+    } finally {
+      setAddingAdmin(false);
+    }
+  };
 
   const fetchUsers = useCallback(async () => {
     if (!user) return;
@@ -86,9 +118,19 @@ export default function AdminUsersPage() {
             <h1 className="text-xl font-bold text-slate-900">User Management</h1>
             <p className="text-sm text-slate-500 mt-0.5">{total} registered users</p>
           </div>
-          <button onClick={fetchUsers} className="p-2 rounded-xl hover:bg-slate-100">
-            <RefreshCw size={16} className={`text-slate-500 ${loading ? "animate-spin" : ""}`} />
-          </button>
+          <div className="flex items-center gap-3">
+            {user?.role === "SUPER_ADMIN" && (
+              <button 
+                onClick={() => setAddAdminOpen(true)}
+                className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors"
+              >
+                <Plus size={16} /> Add Admin
+              </button>
+            )}
+            <button onClick={fetchUsers} className="p-2 rounded-xl hover:bg-slate-100">
+              <RefreshCw size={16} className={`text-slate-500 ${loading ? "animate-spin" : ""}`} />
+            </button>
+          </div>
         </div>
         <div className="mt-4 relative max-w-sm">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -100,6 +142,69 @@ export default function AdminUsersPage() {
           />
         </div>
       </div>
+
+      {/* Add Admin Modal */}
+      {addAdminOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                <Shield size={18} className="text-teal-600" /> Provision New Admin
+              </h3>
+              <button onClick={() => setAddAdminOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleAddAdmin} className="p-5 space-y-4">
+              {addAdminError && (
+                <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+                  {addAdminError}
+                </div>
+              )}
+              
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Email Address</label>
+                <input 
+                  type="email" 
+                  required
+                  value={addAdminForm.email}
+                  onChange={e => setAddAdminForm({...addAdminForm, email: e.target.value})}
+                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Password</label>
+                <input 
+                  type="password" 
+                  required
+                  minLength={6}
+                  value={addAdminForm.password}
+                  onChange={e => setAddAdminForm({...addAdminForm, password: e.target.value})}
+                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+              
+              <div className="pt-4 flex justify-end gap-3">
+                <button 
+                  type="button" 
+                  onClick={() => setAddAdminOpen(false)}
+                  className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={addingAdmin}
+                  className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl transition-colors disabled:opacity-70"
+                >
+                  {addingAdmin ? <Loader2 size={16} className="animate-spin" /> : "Create Admin"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="p-6">
         {loading ? (

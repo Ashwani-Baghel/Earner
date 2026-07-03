@@ -1,10 +1,13 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Check, Clock, RefreshCw } from "lucide-react";
 import type { Gig, PackageTier } from "../../lib/types";
 import { Button } from "../ui/Button";
-import { useCurrency } from "../../context/CurrencyContext";
+import { formatCurrency } from "../../lib/utils";
 import { useCart } from "../../context/CartContext";
+import { useFavorites } from "../../context/FavoritesContext";
+import { Heart } from "lucide-react";
 
 interface GigPackagesProps {
   gig: Gig;
@@ -12,8 +15,10 @@ interface GigPackagesProps {
 
 export function GigPackages({ gig }: GigPackagesProps) {
   const [activeTier, setActiveTier] = useState<PackageTier>("basic");
+  const router = useRouter();
   const { addToCart } = useCart();
-  const { formatPrice } = useCurrency();
+  const { favoriteIds, toggleFavorite } = useFavorites();
+  const isFavorite = favoriteIds.includes(gig.id);
 
   const tiers: PackageTier[] = ["basic", "standard", "premium"];
   const pkg = gig?.packages?.[activeTier];
@@ -48,7 +53,7 @@ export function GigPackages({ gig }: GigPackagesProps) {
       <div className="p-5">
         <div className="flex items-start justify-between mb-3">
           <h3 className="font-bold text-[#404145]">{pkg.name}</h3>
-          <span className="text-2xl font-bold text-[#404145]">{formatPrice(pkg.price)}</span>
+          <span className="text-2xl font-bold text-[#404145]">{formatCurrency(pkg.price)}</span>
         </div>
         <p className="text-sm text-[#74767e] mb-4 leading-relaxed">{pkg.description}</p>
 
@@ -72,15 +77,40 @@ export function GigPackages({ gig }: GigPackagesProps) {
           ))}
         </ul>
 
-        <Button
-          className="w-full mb-3"
-          size="lg"
-          onClick={() => addToCart(gig, activeTier)}
-        >
-          Continue ({formatPrice(pkg.price)})
-        </Button>
-        <Button variant="outline" className="w-full" size="md">
+        <div className="flex gap-2 mb-3">
+          <Button
+            className="flex-1"
+            size="lg"
+            onClick={() => {
+              addToCart(gig, activeTier);
+              router.push("/cart");
+            }}
+          >
+            Continue ({formatCurrency(pkg.price)})
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => {
+              addToCart(gig, activeTier);
+              alert("Added to cart!");
+            }}
+            title="Add to Cart"
+          >
+            Add to Cart
+          </Button>
+        </div>
+        <Button variant="outline" className="w-full mb-3" size="md">
           Compare Packages
+        </Button>
+        <Button 
+          variant="outline" 
+          className={`w-full ${isFavorite ? "text-red-500 border-red-200 bg-red-50" : ""}`} 
+          size="md"
+          onClick={() => toggleFavorite(gig.id)}
+        >
+          <Heart size={16} className="mr-2" fill={isFavorite ? "currentColor" : "none"} />
+          {isFavorite ? "Saved to Wishlist" : "Save to Wishlist"}
         </Button>
       </div>
 

@@ -4,7 +4,7 @@ import { Suspense, useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
-  Search, Bell, MessageSquare,
+  Search, Bell, MessageSquare, ShoppingCart,
   ChevronDown, Globe, LogOut, User,
   BarChart2, Heart, Menu, X,
 } from "lucide-react";
@@ -14,7 +14,8 @@ import { RegisterModal } from "../auth/RegisterModal";
 
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
-import { useCurrency, COUNTRIES } from "../../context/CurrencyContext";
+import { useCart } from "../../context/CartContext";
+import { useFavorites } from "../../context/FavoritesContext";
 import { CategorySlider } from "./CategorySlider";
 
 function LoginQueryListener({ setLoginOpen, user }: { setLoginOpen: (v: boolean) => void, user: any }) {
@@ -29,19 +30,18 @@ function LoginQueryListener({ setLoginOpen, user }: { setLoginOpen: (v: boolean)
 
 export function Navbar() {
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const { unreadCount } = useNotification();
+  const { totalItems } = useCart();
+  const { favoriteIds } = useFavorites();
   const [query, setQuery] = useState("");
   const [loginOpen, setLoginOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [countryMenuOpen, setCountryMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const countryMenuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
-  const { selectedCountry, setSelectedCountry } = useCurrency();
 
   const isSellerView = user?.role === "SELLER" && pathname.startsWith("/seller");
   const dashboardHref =
@@ -61,8 +61,6 @@ export function Navbar() {
     const onClick = (e: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node))
         setUserMenuOpen(false);
-      if (countryMenuRef.current && !countryMenuRef.current.contains(e.target as Node))
-        setCountryMenuOpen(false);
     };
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
@@ -190,34 +188,9 @@ export function Navbar() {
 
                 {/* Country/Currency Selector (buyer only) */}
                 {!isSellerView && (
-                  <div className="relative" ref={countryMenuRef}>
-                    <button
-                      onClick={() => setCountryMenuOpen(!countryMenuOpen)}
-                      className="flex items-center gap-1.5 hover:text-teal-600 transition-colors"
-                    >
-                      <Globe size={16} /> {selectedCountry.name} ({selectedCountry.currency})
-                    </button>
-                    {countryMenuOpen && (
-                      <div className="absolute right-0 top-full mt-3 w-56 bg-white border border-slate-200 shadow-2xl rounded-xl py-2 z-50">
-                        {COUNTRIES.map((country) => (
-                          <button
-                            key={country.code}
-                            onClick={() => {
-                              setSelectedCountry(country.code);
-                              setCountryMenuOpen(false);
-                            }}
-                            className={`w-full text-left px-5 py-2.5 text-sm font-medium transition-colors hover:bg-slate-50 ${
-                              selectedCountry.code === country.code
-                                ? "text-teal-600 bg-slate-50"
-                                : "text-slate-700"
-                            }`}
-                          >
-                            {country.name} ({country.currency})
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <button className="flex items-center gap-1.5 hover:text-teal-600 transition-colors">
+                    <Globe size={16} /> English - USD
+                  </button>
                 )}
 
                 {/* Not logged in */}
@@ -241,6 +214,18 @@ export function Navbar() {
                       <Bell size={20} />
                     </button>
 
+                    {/* Cart */}
+                    {!isSellerView && (
+                      <Link href="/cart" className="relative text-slate-500 hover:text-teal-600 transition-colors">
+                        <ShoppingCart size={20} />
+                        {totalItems > 0 && (
+                          <span className="absolute -top-1.5 -right-2 bg-[#1dbf73] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">
+                            {totalItems > 99 ? "99+" : totalItems}
+                          </span>
+                        )}
+                      </Link>
+                    )}
+
                     {/* Messages */}
                     <Link href="/messages" className="relative text-slate-500 hover:text-teal-600 transition-colors">
                       <MessageSquare size={20} />
@@ -253,8 +238,13 @@ export function Navbar() {
 
                     {/* Saved (buyer only) */}
                     {!isSellerView && (
-                      <Link href="/saved" className="text-slate-500 hover:text-teal-600 transition-colors">
+                      <Link href="/wishlist" className="relative text-slate-500 hover:text-teal-600 transition-colors">
                         <Heart size={20} />
+                        {favoriteIds.length > 0 && (
+                          <span className="absolute -top-1.5 -right-2 bg-pink-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">
+                            {favoriteIds.length > 99 ? "99+" : favoriteIds.length}
+                          </span>
+                        )}
                       </Link>
                     )}
 

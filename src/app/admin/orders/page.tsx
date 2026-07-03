@@ -137,7 +137,7 @@ export default function AdminOrdersPage() {
                       <p className="font-medium text-slate-700">{o.seller?.name}</p>
                     </td>
                     <td className="px-4 py-3 capitalize text-slate-600">{o.packageTier}</td>
-                    <td className="px-4 py-3 font-bold text-slate-900">₹{o.price.toLocaleString()}</td>
+                    <td className="px-4 py-3 font-bold text-slate-900">${o.price.toLocaleString()}</td>
                     <td className="px-4 py-3"><StatusBadge status={o.status} /></td>
                     <td className="px-4 py-3 text-xs text-slate-400 whitespace-nowrap">
                       {new Date(o.createdAt).toLocaleDateString()}

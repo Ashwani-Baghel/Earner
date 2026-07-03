@@ -1,27 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useFavorites } from "@/context/FavoritesContext";
 import { Heart } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
 
 export function WishlistButton({ gigId }: { gigId: string }) {
-  const { user } = useAuth();
-  const router = useRouter();
-  const [isSaved, setIsSaved] = useState(false);
-
-  const handleToggle = () => {
-    if (!user) {
-      router.push("?login=true");
-      return;
-    }
-    // Toggle state for now
-    setIsSaved(!isSaved);
-  };
+  const { favoriteIds, toggleFavorite } = useFavorites();
+  const isSaved = favoriteIds.includes(gigId);
 
   return (
     <button 
-      onClick={handleToggle}
+      onClick={() => toggleFavorite(gigId)}
       className={`px-4 py-2 border border-[#e4e5e7] rounded-lg text-sm font-semibold flex items-center justify-center transition-all ${
         isSaved 
           ? "bg-red-50 text-red-500 border-red-200 hover:bg-red-100" 

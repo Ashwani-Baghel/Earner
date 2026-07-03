@@ -93,7 +93,7 @@ export default function AdminAnalyticsPage() {
 
         {/* ── Summary Cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Total Revenue" value={`₹${data.totalRevenue.toLocaleString()}`} icon={DollarSign} color="bg-teal-50 text-teal-600" />
+          <StatCard label="Total Revenue" value={`$${data.totalRevenue.toLocaleString()}`} icon={DollarSign} color="bg-teal-50 text-teal-600" />
           <StatCard label="Total Orders"  value={totalOrders}    icon={ShoppingBag} color="bg-blue-50 text-blue-600"   />
           <StatCard label="New Users (30d)" value={totalUsers}   icon={Users}       color="bg-purple-50 text-purple-600" />
           <StatCard label="Revenue Growth" value={`+${data.daily.filter(d => d.revenue > 0).length}d`} icon={TrendingUp} color="bg-amber-50 text-amber-600" />
@@ -114,7 +114,7 @@ export default function AdminAnalyticsPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="date" tickFormatter={formatDate} tick={{ fontSize: 11, fill: "#94a3b8" }} />
               <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} />
-              <Tooltip formatter={(v: any) => [`₹${Number(v).toLocaleString()}`, "Revenue"]} />
+              <Tooltip formatter={(v: any) => [`$${Number(v).toLocaleString()}`, "Revenue"]} />
               <Area type="monotone" dataKey="revenue" stroke="#0d9488" strokeWidth={2} fill="url(#revGrad)" />
             </AreaChart>
           </ResponsiveContainer>
@@ -190,7 +190,7 @@ export default function AdminAnalyticsPage() {
                       <p className="text-xs text-slate-400 truncate">{s.email}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-sm font-bold text-teal-700">₹{s.earnings.toLocaleString()}</p>
+                      <p className="text-sm font-bold text-teal-700">${s.earnings.toLocaleString()}</p>
                       <p className="text-xs text-slate-400">{s.totalOrders} orders</p>
                     </div>
                   </div>

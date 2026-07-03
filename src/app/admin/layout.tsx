@@ -28,16 +28,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
 
+  const isLoginPage = pathname === "/admin/login";
+
   useEffect(() => {
+    if (isLoginPage) return;
     if (loading) return;
-    if (!user) { router.push("/"); return; }
+    if (!user) { router.push("/admin/login"); return; }
     const r = user.role ?? "";
     if (r === "ADMIN" || r === "SUPER_ADMIN") {
       setIsAdmin(true);
     } else {
-      router.push("/");
+      router.push("/admin/login");
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, isLoginPage]);
+
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
 
   if (!isAdmin) {
     return (

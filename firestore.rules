@@ -22,5 +22,11 @@ service cloud.firestore {
       allow read: if request.auth != null && resource.data.recipientId == request.auth.uid;
     }
     
+    // 4. System Notifications:
+    // Allows the query in NotificationContext to listen to the "notifications" collection
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null && resource.data.recipientId == request.auth.uid;
+    }
+    
   }
 }
