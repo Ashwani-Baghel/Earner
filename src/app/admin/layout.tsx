@@ -7,7 +7,7 @@ import Link from "next/link";
 import {
   LayoutDashboard, Users, Briefcase, ShoppingBag,
   Flag, BarChart3, Loader2, ArrowLeft, ChevronRight,
-  Shield, Search, Bell, Menu, CreditCard, Settings,
+  Shield, Search, Bell, Menu, CreditCard, Settings, LogOut, User
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 
@@ -23,10 +23,11 @@ const NAV = [
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const router   = useRouter();
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const isLoginPage = pathname === "/admin/login";
 
@@ -105,24 +106,49 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
 
         {/* Footer */}
-        <div className="p-3 border-t border-slate-200 space-y-1">
-          <div className="px-4 py-3 rounded-xl bg-slate-50">
-            <p className="text-xs font-bold text-slate-800 truncate">{user?.displayName}</p>
-            <p className="text-xs text-slate-400 truncate">{user?.email}</p>
-            <span className={`inline-block mt-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full ${
-              user?.role === "SUPER_ADMIN"
-                ? "bg-purple-100 text-purple-700"
-                : "bg-teal-100 text-teal-700"
-            }`}>
-              {user?.role}
-            </span>
-          </div>
-          <Link
-            href="/"
-            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors"
+        <div className="p-3 border-t border-slate-200 relative">
+          <button 
+            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-between"
           >
-            <ArrowLeft size={16} /> Back to Site
-          </Link>
+            <div className="min-w-0 pr-2">
+              <p className="text-xs font-bold text-slate-800 truncate">{user?.displayName}</p>
+              <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+              <span className={`inline-block mt-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full ${
+                user?.role === "SUPER_ADMIN"
+                  ? "bg-purple-100 text-purple-700"
+                  : "bg-teal-100 text-teal-700"
+              }`}>
+                {user?.role}
+              </span>
+            </div>
+            <ChevronRight size={16} className={`text-slate-400 transition-transform ${userMenuOpen ? "rotate-90" : ""}`} />
+          </button>
+
+          {userMenuOpen && (
+            <div className="absolute bottom-full left-3 w-64 mb-2 bg-white border border-slate-200 shadow-xl rounded-xl py-2 z-50">
+              <div className="px-4 py-2 border-b border-slate-100">
+                <p className="text-xs font-bold text-slate-800">Admin Options</p>
+              </div>
+              <div className="py-1">
+                <Link
+                  href="/admin/settings"
+                  onClick={() => setUserMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors"
+                >
+                  <Settings size={15} /> Settings
+                </Link>
+              </div>
+              <div className="border-t border-slate-100 py-1">
+                <button
+                  onClick={() => { signOut(); setUserMenuOpen(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-red-500 transition-colors"
+                >
+                  <LogOut size={15} /> Sign Out
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </aside>
 

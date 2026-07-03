@@ -7,6 +7,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, handleApiError, ApiError } from "@/lib/apiAuth";
 
+export const dynamic = "force-dynamic";
+
 // ── GET /api/gigs ─────────────────────────────────────────────────────────────
 // Public — no authentication required
 export async function GET(req: NextRequest) {
@@ -54,8 +56,9 @@ export async function GET(req: NextRequest) {
           ? {
               OR: [
                 { title: { contains: search, mode: "insensitive" } },
-                { description: { contains: search, mode: "insensitive" } },
                 { tags: { has: search } },
+                { category: { name: { contains: search, mode: "insensitive" } } },
+                { subcategory: { name: { contains: search, mode: "insensitive" } } },
               ],
             }
           : {}),

@@ -22,7 +22,28 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
   const { items } = useCart();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiryDate, setExpiryDate] = useState("");
+  const [cvc, setCvc] = useState("");
+
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "").substring(0, 16);
+    const formatted = value.replace(/(\d{4})(?=\d)/g, "$1 ");
+    setCardNumber(formatted);
+  };
+
+  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "").substring(0, 4);
+    const formatted = value.replace(/(\d{2})(?=\d)/g, "$1/");
+    setExpiryDate(formatted);
+  };
+
+  const handleCvcChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "").substring(0, 3);
+    setCvc(value);
+  };
+
   // Find the specific item in the cart
   const item = items.find(i => i.gig.id === gigId && i.tier === tier);
 
@@ -96,7 +117,7 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
         </Link>
 
         <div className="flex flex-col lg:flex-row gap-10">
-          
+
           {/* Left Column: Payment Form */}
           <div className="flex-1">
             <div className="bg-white rounded-xl border border-[#e4e5e7] p-8">
@@ -118,8 +139,10 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
                 <div>
                   <label className="block text-sm font-bold text-[#404145] mb-2">Card Number (Mock)</label>
                   <div className="relative">
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
+                      value={cardNumber}
+                      onChange={handleCardNumberChange}
                       placeholder="4242 4242 4242 4242"
                       required
                       className="w-full pl-10 pr-4 py-3 rounded-lg border border-[#e4e5e7] focus:border-[#404145] focus:outline-none transition-colors"
@@ -131,8 +154,10 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-bold text-[#404145] mb-2">Expiration Date</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
+                      value={expiryDate}
+                      onChange={handleExpiryChange}
                       placeholder="MM/YY"
                       required
                       className="w-full px-4 py-3 rounded-lg border border-[#e4e5e7] focus:border-[#404145] focus:outline-none transition-colors"
@@ -140,8 +165,10 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-[#404145] mb-2">Security Code</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
+                      value={cvc}
+                      onChange={handleCvcChange}
                       placeholder="CVC"
                       required
                       className="w-full px-4 py-3 rounded-lg border border-[#e4e5e7] focus:border-[#404145] focus:outline-none transition-colors"
@@ -151,17 +178,17 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
 
                 <div>
                   <label className="block text-sm font-bold text-[#404145] mb-2">Name on Card</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     placeholder="John Doe"
                     required
                     className="w-full px-4 py-3 rounded-lg border border-[#e4e5e7] focus:border-[#404145] focus:outline-none transition-colors"
                   />
                 </div>
 
-                <Button 
-                  type="submit" 
-                  size="lg" 
+                <Button
+                  type="submit"
+                  size="lg"
                   className="w-full text-lg mt-4 h-14"
                   disabled={loading}
                 >
@@ -181,11 +208,11 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
             <div className="bg-white rounded-xl border border-[#e4e5e7] overflow-hidden sticky top-24">
               <div className="p-6">
                 <h2 className="text-xl font-bold text-[#404145] mb-6">Order Summary</h2>
-                
+
                 <div className="flex gap-4 mb-6">
                   <div className="w-24 h-16 bg-slate-100 rounded-md overflow-hidden shrink-0">
-                    <img 
-                      src={item.gig.images?.[0] || "https://picsum.photos/seed/gig/400/300"} 
+                    <img
+                      src={item.gig.images?.[0] || "https://picsum.photos/seed/gig/400/300"}
                       alt={item.gig.title}
                       className="w-full h-full object-cover"
                     />

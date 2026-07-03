@@ -38,6 +38,19 @@ enum OrderStatus {
   REFUNDED
 }
 
+enum TransactionType {
+  PAYMENT
+  PAYOUT
+  REFUND
+  PLATFORM_FEE
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
 enum ReportStatus {
   OPEN
   RESOLVED
@@ -71,6 +84,7 @@ model User {
   favorites     Favorite[]     @relation("UserFavorites")
   conversations ConversationParticipant[]
   reportsGiven  Report[]       @relation("ReportsByUser")
+  transactions  Transaction[]
 }
 
 // ─── Seller Profile ───────────────────────────────────────────────────────────
@@ -237,6 +251,7 @@ model Order {
   paymentIntentId String?  @unique
 
   review Review?
+  transactions Transaction[]
 }
 
 // ─── Review ───────────────────────────────────────────────────────────────────
@@ -297,4 +312,21 @@ model Message {
   text           String
   read           Boolean      @default(false)
   createdAt      DateTime     @default(now())
+}
+
+// ─── Transaction ──────────────────────────────────────────────────────────────
+model Transaction {
+  id          String   @id @default(cuid())
+  amount      Float
+  type        TransactionType
+  status      TransactionStatus @default(COMPLETED)
+  
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  
+  orderId     String?
+  order       Order?   @relation(fields: [orderId], references: [id])
+  
+  description String?
+  createdAt   DateTime @default(now())
 }

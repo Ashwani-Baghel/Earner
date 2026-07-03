@@ -33,10 +33,10 @@ export function ContactSellerButton({ sellerId, sellerName = "Seller", sellerAva
         convRef,
         where("participants", "array-contains", user.uid)
       );
-      
+
       const querySnapshot = await getDocs(q);
       let existingConvId = null;
-      
+
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         if (data.participants && data.participants.includes(sellerId)) {
@@ -63,23 +63,19 @@ export function ContactSellerButton({ sellerId, sellerName = "Seller", sellerAva
           lastMessage: "",
           updatedAt: serverTimestamp()
         });
-        
+
         router.push(`/messages?c=${newConv.id}`);
       }
     } catch (e: any) {
       console.error("Error creating conversation:", e);
-      if (e?.code === 'permission-denied') {
-        alert("Firestore permissions error: Please update your Firestore Security Rules in the Firebase Console as shown in the Walkthrough.");
-      } else {
-        alert("Unable to start conversation. Please try again. " + (e?.message || ""));
-      }
+      alert("Unable to start conversation. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <button 
+    <button
       onClick={handleContact}
       disabled={loading}
       className="px-4 py-2 border border-[#e4e5e7] text-[#404145] rounded-lg text-sm font-semibold flex items-center gap-2 hover:border-[#1dbf73] hover:text-[#1dbf73] transition-all disabled:opacity-50"

@@ -1,8 +1,7 @@
 "use client";
 import { useSearchParams } from "next/navigation";
-import { useState, useMemo, Suspense } from "react";
-import { SlidersHorizontal } from "lucide-react";
-import { GIGS } from "@/lib/mock-data/gigs";
+import { useState, useMemo, Suspense, useEffect } from "react";
+import { SlidersHorizontal, Loader2 } from "lucide-react";
 import { filterGigs, sortGigs } from "@/lib/utils";
 import type { SearchFilters as ISearchFilters, SortOption } from "@/lib/types";
 import { GigCard } from "@/components/gig/GigCard";
@@ -24,11 +23,33 @@ function SearchContent() {
   const [filters, setFilters] = useState<Partial<ISearchFilters>>({ query: q });
   const [sort, setSort] = useState<SortOption>("relevance");
   const [mobileFilters, setMobileFilters] = useState(false);
+  const [fetchedGigs, setFetchedGigs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch real gigs from the API whenever the search query `q` changes
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    fetch(`/api/gigs?q=${encodeURIComponent(q)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (active) {
+          setFetchedGigs(Array.isArray(data) ? data : []);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch gigs:", err);
+        if (active) setLoading(false);
+      });
+
+    return () => { active = false; };
+  }, [q]);
 
   const results = useMemo(() => {
-    const f = filterGigs(GIGS, { ...filters, query: q || filters.query });
+    const f = filterGigs(fetchedGigs, { ...filters, query: q || filters.query });
     return sortGigs(f, sort);
-  }, [filters, q, sort]);
+  }, [fetchedGigs, filters, q, sort]);
 
   return (
     <div className="container-earner py-8">
@@ -43,7 +64,7 @@ function SearchContent() {
       <div className="flex gap-8">
         {/* Sidebar filters - desktop */}
         <div className="hidden lg:block">
-          <SearchFilters filters={filters} onChange={setFilters} />
+          <SearchFilters filters={filters} onChange={setFilters} availableGigs={fetchedGigs} />
         </div>
 
         {/* Main content */}
@@ -66,12 +87,16 @@ function SearchContent() {
           {/* Mobile filters */}
           {mobileFilters && (
             <div className="lg:hidden mb-5">
-              <SearchFilters filters={filters} onChange={setFilters} />
+              <SearchFilters filters={filters} onChange={setFilters} availableGigs={fetchedGigs} />
             </div>
           )}
 
           {/* Results grid */}
-          {results.length === 0 ? (
+          {loading ? (
+            <div className="flex justify-center items-center py-32">
+              <Loader2 className="w-8 h-8 text-[#1dbf73] animate-spin" />
+            </div>
+          ) : results.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-5xl mb-4">🔍</p>
               <h3 className="text-xl font-bold text-[#404145] mb-2">No results found</h3>

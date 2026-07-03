@@ -35,6 +35,7 @@ export function Navbar() {
   const { unreadCount } = useNotification();
   const { totalItems } = useCart();
   const { favoriteIds } = useFavorites();
+  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
   const [query, setQuery] = useState("");
   const [loginOpen, setLoginOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -219,7 +220,7 @@ export function Navbar() {
                     </button>
 
                     {/* Cart */}
-                    {!isSellerView && (
+                    {!isSellerView && !isAdmin && (
                       <Link href="/cart" className="relative text-slate-500 hover:text-teal-600 transition-colors">
                         <ShoppingCart size={20} />
                         {totalItems > 0 && (
@@ -241,7 +242,7 @@ export function Navbar() {
                     </Link>
 
                     {/* Saved (buyer only) */}
-                    {!isSellerView && (
+                    {!isSellerView && !isAdmin && (
                       <Link href="/wishlist" className="relative text-slate-500 hover:text-teal-600 transition-colors">
                         <Heart size={20} />
                         {favoriteIds.length > 0 && (
@@ -253,20 +254,23 @@ export function Navbar() {
                     )}
 
                     {/* Role switch */}
-                    {!isSellerView ? (
-                      <button
-                        onClick={() => handleSwitchRole("SELLER")}
-                        className="font-semibold hover:text-teal-600 transition-colors"
-                      >
-                        Switch to Selling
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleSwitchRole("BUYER")}
-                        className="font-semibold hover:text-teal-600 transition-colors"
-                      >
-                        Switch to Buying
-                      </button>
+                    {/* Role switch */}
+                    {!isAdmin && (
+                      !isSellerView ? (
+                        <button
+                          onClick={() => handleSwitchRole("SELLER")}
+                          className="font-semibold hover:text-teal-600 transition-colors"
+                        >
+                          Switch to Selling
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleSwitchRole("BUYER")}
+                          className="font-semibold hover:text-teal-600 transition-colors"
+                        >
+                          Switch to Buying
+                        </button>
+                      )
                     )}
 
                     {/* Avatar + dropdown */}
@@ -300,15 +304,17 @@ export function Navbar() {
                             >
                               <User size={15} /> Profile
                             </Link>
-                             <Link
-                              href={dashboardHref}
-                              target={user?.role === "SELLER" ? "_blank" : undefined}
-                              rel={user?.role === "SELLER" ? "noopener noreferrer" : undefined}
-                              onClick={() => setUserMenuOpen(false)}
-                              className="flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors"
-                            >
-                              <BarChart2 size={15} /> Dashboard
-                            </Link>
+                            {!isAdmin && (
+                              <Link
+                                href={dashboardHref}
+                                target={user?.role === "SELLER" ? "_blank" : undefined}
+                                rel={user?.role === "SELLER" ? "noopener noreferrer" : undefined}
+                                onClick={() => setUserMenuOpen(false)}
+                                className="flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors"
+                              >
+                                <BarChart2 size={15} /> Dashboard
+                              </Link>
+                            )}
                             {user.role === "ADMIN" && (
                               <Link
                                 href="/admin"
@@ -404,12 +410,14 @@ export function Navbar() {
                     <p className="text-xs text-slate-500 truncate">{user.email}</p>
                   </div>
                 </div>
-                {[
+                {(!isAdmin ? [
                   { href: dashboardHref, label: "Dashboard", target: user?.role === "SELLER" ? "_blank" : undefined },
                   { href: "/orders",    label: "My Orders" },
                   { href: "/messages",  label: "Messages" },
                   { href: "/settings",  label: "Settings" },
-                ].map(({ href, label, target }) => (
+                ] : [
+                  { href: "/admin", label: "Admin Panel" }
+                ]).map(({ href, label, target }) => (
                   <Link
                     key={href}
                     href={href}

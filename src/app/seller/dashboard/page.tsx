@@ -15,6 +15,7 @@ export default function SellerDashboard() {
   useEffect(() => {
     if (loading) return;
     if (!user) { router.push("/"); return; }
+    if (user.role === "ADMIN" || user.role === "SUPER_ADMIN") { router.push("/admin"); return; }
     // If user is a buyer, send them to buyer dashboard
     if (user.hasRole && user.role === "BUYER") {
       router.push("/buyer/dashboard");
