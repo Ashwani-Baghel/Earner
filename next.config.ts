@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "upload.wikimedia.org" },
     ],
   },
+  serverExternalPackages: ["@prisma/client", "bcrypt"],
 };
 
 export default nextConfig;

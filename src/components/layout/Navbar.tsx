@@ -11,6 +11,7 @@ import {
 import { Avatar } from "../ui/Avatar";
 import { LoginModal } from "../auth/LoginModal";
 import { RegisterModal } from "../auth/RegisterModal";
+import toast from "react-hot-toast";
 
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
@@ -210,7 +211,10 @@ export function Navbar() {
                   /* Logged in */
                   <div className="flex items-center gap-4 border-l border-slate-200 pl-4">
                     {/* Notifications */}
-                    <button className="text-slate-500 hover:text-teal-600 transition-colors">
+                    <button 
+                      onClick={() => toast("Notifications will be integrated soon", { icon: "🔔" })}
+                      className="text-slate-500 hover:text-teal-600 transition-colors"
+                    >
                       <Bell size={20} />
                     </button>
 

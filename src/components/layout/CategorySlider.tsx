@@ -11,6 +11,18 @@ export function CategorySlider() {
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
   const [hoveredCat, setHoveredCat] = useState<string | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = (catId: string) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setHoveredCat(catId);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setHoveredCat(null);
+    }, 150);
+  };
 
   const checkArrows = () => {
     if (!containerRef.current) return;
@@ -62,8 +74,8 @@ export function CategorySlider() {
           <div
             key={cat.id}
             className="relative flex-shrink-0"
-            onMouseEnter={() => setHoveredCat(cat.id)}
-            onMouseLeave={() => setHoveredCat(null)}
+            onMouseEnter={() => handleMouseEnter(cat.id)}
+            onMouseLeave={handleMouseLeave}
           >
             <Link
               href={`/categories/${cat.slug}`}
@@ -96,8 +108,8 @@ export function CategorySlider() {
         return cat ? (
           <div
             className="absolute left-0 right-0 z-50 shadow-lg"
-            onMouseEnter={() => setHoveredCat(hoveredCat)}
-            onMouseLeave={() => setHoveredCat(null)}
+            onMouseEnter={() => handleMouseEnter(hoveredCat)}
+            onMouseLeave={handleMouseLeave}
           >
             <CategoryMegaMenu category={cat} onClose={() => setHoveredCat(null)} />
           </div>
