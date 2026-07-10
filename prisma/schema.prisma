@@ -28,6 +28,12 @@ enum GigStatus {
   DELETED
 }
 
+model PlatformSettings {
+  id        String   @id @default("global")
+  data      Json     // Store all settings as a JSON object
+  updatedAt DateTime @updatedAt
+}
+
 enum OrderStatus {
   PENDING
   ACTIVE
@@ -36,19 +42,6 @@ enum OrderStatus {
   COMPLETED
   CANCELLED
   REFUNDED
-}
-
-enum TransactionType {
-  PAYMENT
-  PAYOUT
-  REFUND
-  PLATFORM_FEE
-}
-
-enum TransactionStatus {
-  PENDING
-  COMPLETED
-  FAILED
 }
 
 enum ReportStatus {
@@ -84,7 +77,6 @@ model User {
   favorites     Favorite[]     @relation("UserFavorites")
   conversations ConversationParticipant[]
   reportsGiven  Report[]       @relation("ReportsByUser")
-  transactions  Transaction[]
 }
 
 // ─── Seller Profile ───────────────────────────────────────────────────────────
@@ -251,7 +243,6 @@ model Order {
   paymentIntentId String?  @unique
 
   review Review?
-  transactions Transaction[]
 }
 
 // ─── Review ───────────────────────────────────────────────────────────────────
@@ -312,21 +303,4 @@ model Message {
   text           String
   read           Boolean      @default(false)
   createdAt      DateTime     @default(now())
-}
-
-// ─── Transaction ──────────────────────────────────────────────────────────────
-model Transaction {
-  id          String   @id @default(cuid())
-  amount      Float
-  type        TransactionType
-  status      TransactionStatus @default(COMPLETED)
-  
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id])
-  
-  orderId     String?
-  order       Order?   @relation(fields: [orderId], references: [id])
-  
-  description String?
-  createdAt   DateTime @default(now())
 }

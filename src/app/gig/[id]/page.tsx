@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Clock, RefreshCw, Shield, MessageSquare } from "lucide-react";
-import { getReviewsByGigId } from "@/lib/mock-data/reviews";
 import { GigGallery } from "@/components/gig/GigGallery";
 import { GigPackages } from "@/components/gig/GigPackages";
 import { GigReviews } from "@/components/gig/GigReviews";
@@ -104,7 +103,7 @@ export default async function GigDetailPage({ params }: Props) {
   }
 
   const gig = mapPrismaGig(gigRaw);
-  const reviews = getReviewsByGigId(id);
+  const reviews: any[] = [];
 
   // Fetch a few related gigs from the same category
   const relatedRaw = await prisma.gig.findMany({

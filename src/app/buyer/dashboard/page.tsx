@@ -36,8 +36,8 @@ function BuyerDashboardContent() {
   useEffect(() => {
     if (loading) return;
     if (!user) { router.push("/"); return; }
-    if (user.role === "ADMIN" || user.role === "SUPER_ADMIN") { router.push("/admin"); return; }
     if (user.hasRole && user.role === "SELLER") { router.push("/seller/dashboard"); return; }
+    if (user.role === "ADMIN" || user.role === "SUPER_ADMIN") { router.push("/admin"); return; }
   }, [user, loading, router]);
 
   /* ── Fetch real gigs from DB ── */

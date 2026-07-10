@@ -15,12 +15,12 @@ export default function SellerDashboard() {
   useEffect(() => {
     if (loading) return;
     if (!user) { router.push("/"); return; }
-    if (user.role === "ADMIN" || user.role === "SUPER_ADMIN") { router.push("/admin"); return; }
     // If user is a buyer, send them to buyer dashboard
     if (user.hasRole && user.role === "BUYER") {
       router.push("/buyer/dashboard");
       return;
     }
+    if (user.role === "ADMIN" || user.role === "SUPER_ADMIN") { router.push("/admin"); return; }
   }, [user, loading, router]);
 
   const [gigs, setGigs] = useState<any[]>([]);
@@ -33,11 +33,11 @@ export default function SellerDashboard() {
 
   useEffect(() => {
     if (!user || !user.hasRole || user.role !== "SELLER") return;
-    
+
     const fetchData = async () => {
       try {
         const token = await user.getIdToken();
-        
+
         // Fetch Gigs
         const gigsRes = await fetch("/api/gigs?mine=true", {
           headers: { Authorization: `Bearer ${token}` }
@@ -59,12 +59,12 @@ export default function SellerDashboard() {
             const hasBio = !!sp.bio && sp.bio.length > 10;
             const hasSkills = !!sp.skills && sp.skills.length > 0;
             const hasBasic = !!sp.tagline;
-            
+
             if (hasBasic) p += 20;
             if (hasBio) p += 30;
             if (hasSkills) p += 20;
             if (sp.languages && sp.languages.length > 0) p += 10;
-            
+
             setProfileCompletion({ percent: p, hasBasic, hasSkills, hasBio });
           } else {
             setProfileCompletion({ percent: 20, hasBasic: false, hasSkills: false, hasBio: false });
@@ -89,7 +89,7 @@ export default function SellerDashboard() {
   );
 
   const fullName = user?.displayName ?? "User";
-  // The screenshot shows Ashwani B
+
   const nameParts = fullName.split(" ");
   const displayName = nameParts.length > 1
     ? `${nameParts[0]} ${nameParts[nameParts.length - 1][0]}`
@@ -167,7 +167,7 @@ export default function SellerDashboard() {
             <div className="p-8 border-b border-slate-100 flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-slate-900 mb-1 flex items-center gap-3">
-                  My Active Gigs 
+                  My Active Gigs
                   <span className="bg-teal-50 text-teal-700 text-xs py-1 px-2.5 rounded-full font-bold">
                     {gigs.length} Total
                   </span>
@@ -210,12 +210,11 @@ export default function SellerDashboard() {
                         </Link>
                       </td>
                       <td className="px-6 py-5">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
-                          gig.status === 'ACTIVE' ? 'bg-teal-50 text-teal-700' :
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${gig.status === 'ACTIVE' ? 'bg-teal-50 text-teal-700' :
                           gig.status === 'PENDING' ? 'bg-amber-50 text-amber-700' :
-                          gig.status === 'DRAFT' ? 'bg-slate-100 text-slate-700' :
-                          'bg-red-50 text-red-700'
-                        }`}>
+                            gig.status === 'DRAFT' ? 'bg-slate-100 text-slate-700' :
+                              'bg-red-50 text-red-700'
+                          }`}>
                           {gig.status}
                         </span>
                       </td>
@@ -248,7 +247,7 @@ export default function SellerDashboard() {
 
             <div className="space-y-6">
               {/* Task 1 */}
-              <div className="flex items-start gap-5">
+              {/* <div className="flex items-start gap-5">
                 <div className="w-12 h-12 rounded-full border border-[#e4e5e7] flex items-center justify-center flex-shrink-0 text-slate-500 font-medium text-lg bg-[#f9f9f9]">
                   1
                 </div>
@@ -259,13 +258,11 @@ export default function SellerDashboard() {
                   </div>
                   <CheckCircle2 size={24} className="text-teal-600 mt-1" />
                 </div>
-              </div>
+              </div> */}
 
               {/* Task 2 */}
               <div className="flex items-start gap-5 group">
-                <div className="w-12 h-12 rounded-full border-2 border-teal-600 flex items-center justify-center flex-shrink-0 text-teal-600 font-bold text-lg shadow-sm bg-green-50">
-                  2
-                </div>
+
                 <div className="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all rounded-xl p-4 -ml-4 hover:bg-[#f5f5f5]">
                   <div>
                     <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-teal-600 transition-colors">Create and publish your first Gig</h3>

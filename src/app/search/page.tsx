@@ -1,6 +1,6 @@
 "use client";
 import { useSearchParams } from "next/navigation";
-import { useState, useMemo, Suspense, useEffect } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { SlidersHorizontal, Loader2 } from "lucide-react";
 import { filterGigs, sortGigs } from "@/lib/utils";
 import type { SearchFilters as ISearchFilters, SortOption } from "@/lib/types";
@@ -23,33 +23,33 @@ function SearchContent() {
   const [filters, setFilters] = useState<Partial<ISearchFilters>>({ query: q });
   const [sort, setSort] = useState<SortOption>("relevance");
   const [mobileFilters, setMobileFilters] = useState(false);
-  const [fetchedGigs, setFetchedGigs] = useState<any[]>([]);
+
+  const [gigs, setGigs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch real gigs from the API whenever the search query `q` changes
   useEffect(() => {
-    let active = true;
     setLoading(true);
-    fetch(`/api/gigs?q=${encodeURIComponent(q)}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (active) {
-          setFetchedGigs(Array.isArray(data) ? data : []);
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to fetch gigs:", err);
-        if (active) setLoading(false);
-      });
+    const category = params.get("category");
+    const subcategory = params.get("subcategory");
+    
+    let url = "/api/gigs?";
+    if (category) url += `category=${encodeURIComponent(category)}&`;
+    if (subcategory) url += `subcategory=${encodeURIComponent(subcategory)}&`;
+    if (q) url += `q=${encodeURIComponent(q)}&`;
 
-    return () => { active = false; };
-  }, [q]);
+    fetch(url)
+      .then(res => res.ok ? res.json() : [])
+      .then(data => {
+        setGigs(Array.isArray(data) ? data : []);
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
+  }, [params, q]);
 
   const results = useMemo(() => {
-    const f = filterGigs(fetchedGigs, { ...filters, query: q || filters.query });
+    const f = filterGigs(gigs, { ...filters, query: q || filters.query });
     return sortGigs(f, sort);
-  }, [fetchedGigs, filters, q, sort]);
+  }, [gigs, filters, q, sort]);
 
   return (
     <div className="container-earner py-8">
@@ -64,7 +64,7 @@ function SearchContent() {
       <div className="flex gap-8">
         {/* Sidebar filters - desktop */}
         <div className="hidden lg:block">
-          <SearchFilters filters={filters} onChange={setFilters} availableGigs={fetchedGigs} />
+          <SearchFilters filters={filters} onChange={setFilters} />
         </div>
 
         {/* Main content */}
@@ -87,24 +87,25 @@ function SearchContent() {
           {/* Mobile filters */}
           {mobileFilters && (
             <div className="lg:hidden mb-5">
-              <SearchFilters filters={filters} onChange={setFilters} availableGigs={fetchedGigs} />
+              <SearchFilters filters={filters} onChange={setFilters} />
             </div>
           )}
 
-          {/* Results grid */}
+          {/* Grid */}
           {loading ? (
-            <div className="flex justify-center items-center py-32">
-              <Loader2 className="w-8 h-8 text-[#1dbf73] animate-spin" />
+            <div className="flex justify-center py-20">
+              <Loader2 className="animate-spin text-teal-600" size={40} />
             </div>
-          ) : results.length === 0 ? (
-            <div className="text-center py-20">
-              <p className="text-5xl mb-4">🔍</p>
-              <h3 className="text-xl font-bold text-[#404145] mb-2">No results found</h3>
-              <p className="text-[#74767e] text-sm">Try adjusting your filters or search for something else</p>
+          ) : results.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {results.map((gig) => (
+                <GigCard key={gig.id} gig={gig} />
+              ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {results.map((gig) => <GigCard key={gig.id} gig={gig} />)}
+            <div className="text-center py-20">
+              <h3 className="text-xl font-bold text-[#404145] mb-2">No services found for your search</h3>
+              <p className="text-[#74767e]">Try adjusting your search or filters to find what you&apos;re looking for.</p>
             </div>
           )}
         </div>

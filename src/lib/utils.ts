@@ -86,10 +86,18 @@ export function getSellerLevelLabel(
 
 export function filterGigs(gigs: Gig[], filters: Partial<SearchFilters>): Gig[] {
   return gigs.filter((gig) => {
+    if (filters.query) {
+      const q = filters.query.toLowerCase();
+      const match =
+        gig.title.toLowerCase().includes(q) ||
+        gig.description.toLowerCase().includes(q) ||
+        gig.tags.some((t) => t.toLowerCase().includes(q)) ||
+        gig.category.toLowerCase().includes(q);
+      if (!match) return false;
+    }
 
     if (filters.category && filters.category !== "all") {
-      const gigCatSlug = gig.category.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-');
-      if (gigCatSlug !== filters.category) return false;
+      if (gig.category !== filters.category) return false;
     }
 
     if (filters.minPrice !== null && filters.minPrice !== undefined) {

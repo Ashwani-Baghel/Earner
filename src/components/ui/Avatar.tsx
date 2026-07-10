@@ -30,7 +30,7 @@ export function Avatar({ src, alt, size = "md", online, initials, className }: A
           <Image src={src} alt={alt} width={px} height={px} className="object-cover w-full h-full" unoptimized />
         ) : (
           <span className="font-semibold text-[#404145]">
-            {initials || alt.charAt(0).toUpperCase()}
+            {initials || (alt ? alt.charAt(0).toUpperCase() : "U")}
           </span>
         )}
       </div>

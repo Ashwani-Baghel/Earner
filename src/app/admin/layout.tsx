@@ -7,7 +7,7 @@ import Link from "next/link";
 import {
   LayoutDashboard, Users, Briefcase, ShoppingBag,
   Flag, BarChart3, Loader2, ArrowLeft, ChevronRight,
-  Shield, Search, Bell, Menu, CreditCard, Settings, LogOut, User
+  Shield, Search, Bell, Menu, CreditCard, Settings, X, LogOut, User
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 
@@ -19,7 +19,19 @@ const NAV = [
   { href: "/admin/payments",   label: "Payments",       icon: CreditCard      },
   { href: "/admin/reports",    label: "Reports",        icon: Flag            },
   { href: "/admin/analytics",  label: "Analytics",      icon: BarChart3       },
-  { href: "/admin/settings",   label: "Settings",       icon: Settings        },
+];
+
+const SETTINGS_CATEGORIES = [
+  { id: "general", label: "General" },
+  { id: "authentication", label: "Authentication" },
+  { id: "users", label: "Users" },
+  { id: "gigs", label: "Gigs" },
+  { id: "payments", label: "Payments" },
+  { id: "notifications", label: "Notifications" },
+  { id: "security", label: "Security" },
+  { id: "legal", label: "Legal" },
+  { id: "integrations", label: "Integrations" },
+  { id: "system", label: "System" }
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -27,9 +39,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router   = useRouter();
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const isLoginPage = pathname === "/admin/login";
+
+  // Auto-expand settings dropdown if we are inside settings
+  useEffect(() => {
+    if (pathname.startsWith("/admin/settings")) {
+      setSettingsOpen(true);
+    }
+  }, [pathname]);
 
   useEffect(() => {
     if (isLoginPage) return;
@@ -59,24 +80,43 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 overflow-hidden relative">
+
+      {/* ── Mobile Sidebar Overlay ── */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
 
       {/* ── Sidebar ── */}
-      <aside className="hidden md:flex w-64 flex-col bg-white border-r border-slate-200 flex-shrink-0">
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 flex-shrink-0 transition-transform duration-300 md:static md:translate-x-0
+        ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
+      `}>
 
         {/* Brand */}
-        <div className="h-[69px] flex items-center gap-3 px-6 border-b border-slate-200">
-          <div className="w-8 h-8 rounded-xl bg-teal-600 flex items-center justify-center flex-shrink-0">
-            <Shield size={16} className="text-white" />
+        <div className="h-[69px] flex items-center justify-between px-6 border-b border-slate-200">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-teal-600 flex items-center justify-center flex-shrink-0">
+              <Shield size={16} className="text-white" />
+            </div>
+            <div>
+              <span className="text-base font-black tracking-tight text-slate-900">
+                Admin<span className="text-teal-600">.</span>
+              </span>
+              {user?.role === "SUPER_ADMIN" && (
+                <p className="text-[10px] text-purple-600 font-bold leading-none mt-0.5">SUPER ADMIN</p>
+              )}
+            </div>
           </div>
-          <div>
-            <span className="text-base font-black tracking-tight text-slate-900">
-              Admin<span className="text-teal-600">.</span>
-            </span>
-            {user?.role === "SUPER_ADMIN" && (
-              <p className="text-[10px] text-purple-600 font-bold leading-none mt-0.5">SUPER ADMIN</p>
-            )}
-          </div>
+          <button 
+            className="md:hidden p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {/* Nav */}
@@ -88,6 +128,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Link
                 key={href}
                 href={href}
+                onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all group ${
                   isActive
                     ? "bg-teal-50 text-teal-700"
@@ -99,10 +140,47 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   className={isActive ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"}
                 />
                 <span className="flex-1">{label}</span>
-                {isActive && <ChevronRight size={14} className="text-teal-400" />}
               </Link>
             );
           })}
+          
+          {/* Settings Dropdown */}
+          <div className="pt-2 mt-2 border-t border-slate-100">
+            <button
+              onClick={() => setSettingsOpen(!settingsOpen)}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all group ${
+                pathname.startsWith("/admin/settings")
+                  ? "text-teal-700"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+              }`}
+            >
+              <Settings
+                size={17}
+                className={pathname.startsWith("/admin/settings") ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"}
+              />
+              <span className="flex-1 text-left">Settings</span>
+              <ChevronRight size={14} className={`transition-transform duration-200 ${settingsOpen ? "rotate-90 text-teal-600" : "text-slate-400"}`} />
+            </button>
+            
+            {settingsOpen && (
+              <div className="mt-1 ml-4 border-l-2 border-slate-100 pl-3 space-y-0.5 py-1">
+                {SETTINGS_CATEGORIES.map(category => (
+                  <Link
+                    key={category.id}
+                    href={`/admin/settings/${category.id}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      pathname === `/admin/settings/${category.id}`
+                        ? "bg-teal-50 text-teal-700"
+                        : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                    }`}
+                  >
+                    {category.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* Footer */}
@@ -158,7 +236,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* ── Top Navbar ── */}
         <header className="h-[69px] bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 flex-shrink-0 z-10">
           <div className="flex items-center gap-4">
-            <button className="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg">
+            <button 
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
+            >
               <Menu size={20} />
             </button>
             <div className="relative hidden sm:block">

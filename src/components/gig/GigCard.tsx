@@ -57,15 +57,10 @@ export function GigCard({ gig, className }: GigCardProps) {
       {/* Body */}
       <div className="p-3">
         {/* Seller info */}
-        <Link href={`/seller/${gig.seller.username || (gig.seller as any).id}`} className="flex items-center gap-2 mb-2 group/seller">
-          <Avatar 
-            src={gig.seller.avatar} 
-            alt={gig.seller.displayName || (gig.seller as any).name || "Seller"} 
-            size="xs" 
-            online={gig.seller.isOnline} 
-          />
+        <Link href={`/seller/${gig.seller.username}`} className="flex items-center gap-2 mb-2 group/seller">
+          <Avatar src={gig.seller.avatar} alt={gig.seller.displayName} size="xs" online={gig.seller.isOnline} />
           <span className="text-xs font-medium text-[#404145] group-hover/seller:text-[#1dbf73] transition-colors truncate">
-            {gig.seller.displayName || (gig.seller as any).name || "Seller"}
+            {gig.seller.displayName}
           </span>
           {gig.seller.level === "top" && (
             <Badge variant="yellow" size="sm">Top Rated</Badge>

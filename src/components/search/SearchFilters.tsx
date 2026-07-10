@@ -7,10 +7,9 @@ import { CATEGORIES } from "../../lib/mock-data/categories";
 interface SearchFiltersProps {
   filters: Partial<SearchFilters>;
   onChange: (filters: Partial<SearchFilters>) => void;
-  availableGigs?: any[];
 }
 
-export function SearchFilters({ filters, onChange, availableGigs }: SearchFiltersProps) {
+export function SearchFilters({ filters, onChange }: SearchFiltersProps) {
   const [budgetOpen, setBudgetOpen] = useState(true);
   const [deliveryOpen, setDeliveryOpen] = useState(true);
   const [levelOpen, setLevelOpen] = useState(true);
@@ -25,25 +24,6 @@ export function SearchFilters({ filters, onChange, availableGigs }: SearchFilter
     </div>
   );
 
-  // Determine if we should show subcategories instead of categories
-  const activeCategorySlug = (() => {
-    if (filters.category && filters.category !== "all") {
-      return filters.category;
-    }
-    if (availableGigs && availableGigs.length > 0) {
-      const uniqueCategories = new Set(availableGigs.map(g => g.category));
-      if (uniqueCategories.size === 1) {
-        const catName = Array.from(uniqueCategories)[0];
-        return catName?.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-') || null;
-      }
-    }
-    return null;
-  })();
-
-  const activeCategory = activeCategorySlug 
-    ? CATEGORIES.find(c => c.slug === activeCategorySlug)
-    : null;
-
   return (
     <aside className="w-64 flex-shrink-0">
       <div className="bg-white rounded-xl border border-[#e4e5e7] p-4 sticky top-20">
@@ -52,44 +32,21 @@ export function SearchFilters({ filters, onChange, availableGigs }: SearchFilter
           <button onClick={() => onChange({})} className="text-xs text-[#1dbf73] hover:underline">Clear all</button>
         </div>
 
-        {/* Category / Subcategory */}
-        {filterSection(activeCategory ? activeCategory.name : "Category", true, () => {}, (
+        {/* Category */}
+        {filterSection("Category", true, () => {}, (
           <div className="space-y-1.5">
-            {activeCategory && (
-              <label className="flex items-center gap-2 cursor-pointer group mb-2">
+            {CATEGORIES.map((cat) => (
+              <label key={cat.id} className="flex items-center gap-2 cursor-pointer group">
                 <input
                   type="radio"
-                  name="subcategory"
-                  checked={!filters.subcategory}
-                  onChange={() => {
-                    const newFilters = { ...filters };
-                    delete newFilters.subcategory;
-                    onChange(newFilters);
-                  }}
+                  name="category"
+                  checked={filters.category === cat.slug}
+                  onChange={() => onChange({ ...filters, category: cat.slug })}
                   className="accent-[#1dbf73]"
                 />
-                <span className="text-sm text-[#404145] font-semibold group-hover:text-[#1dbf73]">All in {activeCategory.name}</span>
+                <span className="text-sm text-[#404145] group-hover:text-[#1dbf73]">{cat.name}</span>
               </label>
-            )}
-
-            {(activeCategory ? activeCategory.subcategories : CATEGORIES).map((item) => {
-              const isSub = !!activeCategory;
-              return (
-                <label key={item.id} className="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="radio"
-                    name={isSub ? "subcategory" : "category"}
-                    checked={isSub ? filters.subcategory === item.slug : filters.category === item.slug}
-                    onChange={() => onChange({ 
-                      ...filters, 
-                      ...(isSub ? { subcategory: item.slug } : { category: item.slug, subcategory: undefined }) 
-                    })}
-                    className="accent-[#1dbf73]"
-                  />
-                  <span className="text-sm text-[#404145] group-hover:text-[#1dbf73]">{item.name}</span>
-                </label>
-              );
-            })}
+            ))}
           </div>
         ))}
 
