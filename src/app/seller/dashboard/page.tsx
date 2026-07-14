@@ -232,7 +232,7 @@ export default function SellerDashboard() {
                         </div>
                       </td>
                       <td className="px-8 py-5 text-right font-bold text-teal-700 text-sm">
-                        {gig.basicPackage?.price ? `$${gig.basicPackage.price.toLocaleString()}` : "—"}
+                        {gig.basicPackage?.price ? `₹${Math.round(gig.basicPackage.price * 83.5).toLocaleString("en-IN")}` : "—"}
                       </td>
                     </tr>
                   ))}

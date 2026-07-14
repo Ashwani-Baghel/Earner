@@ -128,7 +128,7 @@ export function Footer() {
               🌐 English
             </button>
             <button className="flex items-center gap-1 hover:text-[#404145] transition-colors">
-              $ USD
+              ₹ INR
             </button>
             <button className="flex items-center gap-1 hover:text-[#404145] transition-colors">
               ♿

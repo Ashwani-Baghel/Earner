@@ -83,7 +83,7 @@ export default function AdminPaymentsPage() {
           </div>
           <div>
             <p className="text-sm font-semibold text-slate-500">Total Revenue</p>
-            <h3 className="text-2xl font-black text-slate-900">${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
+            <h3 className="text-2xl font-black text-slate-900">₹{Math.round(totalRevenue * 83.5).toLocaleString("en-IN")}</h3>
           </div>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
@@ -172,7 +172,7 @@ export default function AdminPaymentsPage() {
                       <p className="text-xs text-slate-500">{order.seller.email}</p>
                     </td>
                     <td className="px-6 py-4 font-bold text-slate-900">
-                      ${order.price.toFixed(2)}
+                      ₹{Math.round(order.price * 83.5).toLocaleString("en-IN")}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${

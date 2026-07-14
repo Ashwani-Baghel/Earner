@@ -93,7 +93,7 @@ export default function AdminAnalyticsPage() {
 
         {/* ── Summary Cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Total Revenue" value={`$${data.totalRevenue.toLocaleString()}`} icon={DollarSign} color="bg-teal-50 text-teal-600" />
+          <StatCard label="Total Revenue" value={`₹${Math.round(data.totalRevenue * 83.5).toLocaleString("en-IN")}`} icon={DollarSign} color="bg-teal-50 text-teal-600" />
           <StatCard label="Total Orders"  value={totalOrders}    icon={ShoppingBag} color="bg-blue-50 text-blue-600"   />
           <StatCard label="New Users (30d)" value={totalUsers}   icon={Users}       color="bg-purple-50 text-purple-600" />
           <StatCard label="Revenue Growth" value={`+${data.daily.filter(d => d.revenue > 0).length}d`} icon={TrendingUp} color="bg-amber-50 text-amber-600" />

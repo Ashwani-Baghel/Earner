@@ -225,7 +225,7 @@ function BuyerDashboardContent() {
                           <div className="border-t border-slate-100 pt-3 flex items-center justify-between">
                             <span className="text-xs text-slate-400 font-medium">Starting at</span>
                             <span className="text-sm font-bold text-slate-900">
-                              ${price > 0 ? price.toLocaleString() : "499"}
+                              ₹{price > 0 ? Math.round(price * 83.5).toLocaleString("en-IN") : "41,999"}
                             </span>
                           </div>
                         </div>

@@ -209,7 +209,7 @@ export function Navbar() {
                 {/* Country/Currency Selector (buyer only) */}
                 {!isSellerView && (
                   <button className="flex items-center gap-1.5 hover:text-teal-600 transition-colors">
-                    <Globe size={16} /> English - USD
+                    <Globe size={16} /> English - INR
                   </button>
                 )}
 
