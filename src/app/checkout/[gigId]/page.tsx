@@ -546,7 +546,6 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
           </div>
         </div>
       )}
-      </div>
     </div>
   );
 }

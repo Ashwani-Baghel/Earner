@@ -25,12 +25,12 @@ interface CurrencyContextType {
   isLoadingRates: boolean;
 }
 
-const defaultCountry = COUNTRIES[0];
+const defaultCountry = COUNTRIES.find(c => c.code === "IN") || COUNTRIES[0];
 
 const CurrencyContext = createContext<CurrencyContextType>({
   selectedCountry: defaultCountry,
   setSelectedCountry: () => {},
-  formatPrice: (amount) => `$${amount.toFixed(2)}`,
+  formatPrice: (amount) => `₹${Math.round(amount * 83.5).toLocaleString("en-IN")}`,
   isLoadingRates: true,
 });
 
@@ -51,13 +51,11 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [rates, setRates] = useState<Record<string, number>>(FALLBACK_RATES);
   const [isLoadingRates, setIsLoadingRates] = useState(true);
 
-  // Initialize from localStorage
+  // Initialize from localStorage — default to India (INR) if no preference saved
   useEffect(() => {
-    const savedCountryCode = localStorage.getItem("preferred_country");
-    if (savedCountryCode) {
-      const country = COUNTRIES.find((c) => c.code === savedCountryCode);
-      if (country) setSelectedCountryState(country);
-    }
+    const savedCountryCode = localStorage.getItem("preferred_country") || "IN";
+    const country = COUNTRIES.find((c) => c.code === savedCountryCode);
+    if (country) setSelectedCountryState(country);
   }, []);
 
   // Fetch real-time rates

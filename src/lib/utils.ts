@@ -3,17 +3,21 @@ import type { Gig, SearchFilters, SortOption } from "./types";
 // ─── Format Helpers ───────────────────────────────────────────────────────────
 
 export function formatPrice(price: number): string {
-  return `From $${price}`;
+  // price is stored in USD, convert to INR using approximate rate
+  const inrAmount = Math.round(price * 83.5);
+  return `From ₹${inrAmount.toLocaleString("en-IN")}`;
 }
 
 // Removed formatCurrency: use `useCurrency().formatPrice` from CurrencyContext instead.
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-US", {
+  // Converts USD to INR for static display (e.g., checkout page)
+  const inrAmount = Math.round(amount * 83.5);
+  return new Intl.NumberFormat("en-IN", {
     style: "currency",
-    currency: "USD",
+    currency: "INR",
     minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(amount);
+    maximumFractionDigits: 0,
+  }).format(inrAmount);
 }
 
 export function formatDelivery(days: number): string {
