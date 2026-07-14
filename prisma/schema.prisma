@@ -304,3 +304,12 @@ model Message {
   read           Boolean      @default(false)
   createdAt      DateTime     @default(now())
 }
+
+// ─── System Settings ─────────────────────────────────────────────────────────
+model SystemSetting {
+  id        String   @id @default("global") // We will only have one global record
+  feePct    Float    @default(5.0)
+  maintenance Boolean @default(false)
+  contactEmail String @default("support@earner.com")
+  updatedAt DateTime @updatedAt
+}
