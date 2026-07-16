@@ -77,6 +77,7 @@ model User {
   favorites     Favorite[]     @relation("UserFavorites")
   conversations ConversationParticipant[]
   reportsGiven  Report[]       @relation("ReportsByUser")
+  cartItems     CartItem[]
 }
 
 // ─── Seller Profile ───────────────────────────────────────────────────────────
@@ -158,6 +159,7 @@ model Gig {
   gigOrders     Order[]
   reviews       Review[]
   favorites     Favorite[] @relation("GigFavorites")
+  cartItems     CartItem[]
 }
 
 // ─── Gig Packages & Features ───────────────────────────────────────────────────
@@ -312,4 +314,17 @@ model SystemSetting {
   maintenance Boolean @default(false)
   contactEmail String @default("support@earner.com")
   updatedAt DateTime @updatedAt
+}
+
+// ─── Persistent Cart ──────────────────────────────────────────────────────────
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gigId     String
+  gig       Gig      @relation(fields: [gigId], references: [id], onDelete: Cascade)
+  tier      String   // "basic" | "standard" | "premium"
+  createdAt DateTime @default(now())
+
+  @@unique([userId, gigId, tier]) // prevent duplicates
 }

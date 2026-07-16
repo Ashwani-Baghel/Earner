@@ -7,7 +7,8 @@ import { Button } from "../ui/Button";
 import { formatCurrency } from "../../lib/utils";
 import { useCart } from "../../context/CartContext";
 import { useFavorites } from "../../context/FavoritesContext";
-import { Heart } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { Heart, AlertCircle } from "lucide-react";
 
 interface GigPackagesProps {
   gig: Gig;
@@ -18,7 +19,9 @@ export function GigPackages({ gig }: GigPackagesProps) {
   const router = useRouter();
   const { addToCart } = useCart();
   const { favoriteIds, toggleFavorite } = useFavorites();
+  const { user } = useAuth();
   const isFavorite = favoriteIds.includes(gig.id);
+  const isOwnGig = user?.uid === gig.sellerId;
 
   const tiers: PackageTier[] = ["basic", "standard", "premium"];
   const pkg = gig?.packages?.[activeTier];
@@ -77,28 +80,38 @@ export function GigPackages({ gig }: GigPackagesProps) {
           ))}
         </ul>
 
-        <div className="flex gap-2 mb-3">
-          <Button
-            className="flex-1"
-            size="lg"
-            onClick={() => {
-              addToCart(gig, activeTier);
-              router.push("/cart");
-            }}
-          >
-            Continue ({formatCurrency(pkg.price)})
-          </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={() => {
-              addToCart(gig, activeTier);
-              alert("Added to cart!");
-            }}
-            title="Add to Cart"
-          >
-            Add to Cart
-          </Button>
+        <div className="flex flex-col gap-2 mb-3">
+          {isOwnGig && (
+            <div className="flex items-center gap-2 p-2.5 mb-1 bg-amber-50 text-amber-800 text-xs rounded-lg border border-amber-200">
+              <AlertCircle size={14} className="shrink-0" />
+              You cannot purchase your own gig.
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button
+              className="flex-1"
+              size="lg"
+              disabled={isOwnGig}
+              onClick={() => {
+                addToCart(gig, activeTier);
+                router.push("/cart");
+              }}
+            >
+              Continue ({formatCurrency(pkg.price)})
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              disabled={isOwnGig}
+              onClick={() => {
+                addToCart(gig, activeTier);
+                alert("Added to cart!");
+              }}
+              title="Add to Cart"
+            >
+              Add to Cart
+            </Button>
+          </div>
         </div>
         <Button variant="outline" className="w-full mb-3" size="md">
           Compare Packages

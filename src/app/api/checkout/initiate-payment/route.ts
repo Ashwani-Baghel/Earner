@@ -61,16 +61,19 @@ export async function POST(req: NextRequest) {
       // ─── Mock fallback for local development ─────────────────────────────
       console.warn("⚠️  BankLinkr credentials not configured — using mock payment response.");
       const mockTxnId = `TXN${Date.now()}${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+      // Convert USD price to INR for the QR / UPI intent (1 USD ≈ 83.5 INR)
+      const inrAmount = Math.round(Number(price) * 83.5);
       return NextResponse.json({
         success: true,
         message: "Payment initiated successfully",
         data: {
           txnId: mockTxnId,
           orderId,
-          amount: price,
+          amount: inrAmount,   // return INR amount so frontend can use it
+          currency: "INR",
           status: "pending",
           paymentLink: `http://localhost:3000/pay/${mockTxnId}`,
-          intentUrl: `upi://pay?pa=test@upi&pn=Earner&am=${price}.00&tr=${orderId}&tn=Payment+for+${encodeURIComponent(gig.title || "Gig")}&cu=INR`,
+          intentUrl: `upi://pay?pa=earner@upi&pn=Earner+Platform&am=${inrAmount}&cu=INR&tn=${encodeURIComponent(`Order for: ${(gig.title || "Gig").substring(0, 50)}`)}&tr=${orderId}&mc=7372&mode=02`,
           expiresAt: new Date(Date.now() + 10 * 60000).toISOString(),
           expiryMinutes: 10,
         }
@@ -80,10 +83,13 @@ export async function POST(req: NextRequest) {
     // ─── Step 3a: Build request body for BankLinkr ───────────────────────────
     const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/webhooks/banklinkr`;
 
+    // Convert USD price to INR before sending to gateway
+    const inrAmount = Math.round(Number(price) * 83.5);
+
     const gatewayPayload = {
       merchantId,
       orderId,
-      amount: price,
+      amount: inrAmount,     // always send INR to gateway
       currency: "INR",
       customerEmail: buyer.email,
       customerName: buyer.name,
