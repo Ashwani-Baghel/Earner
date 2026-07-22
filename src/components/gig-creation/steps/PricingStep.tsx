@@ -116,12 +116,12 @@ export function PricingStep({ data, updateForm, nextStep, prevStep }: Props) {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-bold text-[#404145] uppercase tracking-wider mb-2">Price ($)</label>
+            <label className="block text-xs font-bold text-[#404145] uppercase tracking-wider mb-2">Price (₹)</label>
             <input
               type="number"
-              min="5"
-              step="5"
-              placeholder="5"
+              min="100"
+              step="50"
+              placeholder="500"
               value={pkg.price}
               onChange={(e) => updatePackage({ price: e.target.value })}
               className="w-full border border-[#c5c6c9] rounded-md px-4 py-2 focus:border-[#404145] outline-none"

@@ -191,13 +191,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setError(null);
       await signInWithEmailAndPassword(auth, email, password);
-    } catch (e: unknown) {
-      const raw = e instanceof Error ? e.message : "Sign in failed";
-      const clean = raw
-        .replace("Firebase: ", "")
-        .replace(/\(auth\/.*?\)/, "")
-        .trim();
-      setError(clean || "Invalid email or password.");
+    } catch (e: any) {
+      if (
+        e.code === "auth/invalid-credential" ||
+        e.code === "auth/wrong-password" ||
+        e.code === "auth/user-not-found" ||
+        e.message?.includes("invalid-credential")
+      ) {
+        setError("Invalid email or password. Please try again.");
+      } else {
+        const raw = e instanceof Error ? e.message : "Sign in failed";
+        const clean = raw
+          .replace("Firebase: ", "")
+          .replace(/\(auth\/.*?\)/, "")
+          .trim();
+        setError(clean || "Sign in failed. Please try again.");
+      }
       throw e;
     }
   };

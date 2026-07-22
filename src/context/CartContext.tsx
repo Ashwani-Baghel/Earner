@@ -32,7 +32,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       const stored = localStorage.getItem("earner_cart");
       if (stored) {
-        setItems(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          const validItems = parsed.filter((i: any) => i && i.gig && i.pkg);
+          setItems(validItems);
+        }
       }
     } catch (err) {
       console.warn("Failed to load cart from localStorage", err);
@@ -75,7 +79,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (res.ok) {
           const data = await res.json();
           if (data.items) {
-            persistLocally(data.items);
+            const validItems = data.items.filter((i: any) => i && i.gig && i.pkg);
+            persistLocally(validItems);
           }
         }
       } catch (err) {
@@ -159,7 +164,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         removeFromCart,
         clearCart,
         totalItems: items.length,
-        totalPrice: items.reduce((sum, i) => sum + i.pkg.price * i.quantity, 0),
+        totalPrice: items.reduce((sum, i) => {
+          if (!i || !i.pkg) return sum;
+          return sum + (i.pkg.price || 0) * (i.quantity || 1);
+        }, 0),
       }}
     >
       {children}
