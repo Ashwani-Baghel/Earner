@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile } from "fs/promises";
-import path from "path";
-import fs from "fs";
+import { getAdminStorage } from "@/lib/firebaseAdmin";
+import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,20 +12,28 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const filename = Date.now() + "_" + file.name.replace(/\\s/g, "_");
+    const filename = Date.now() + "_" + file.name.replace(/\s/g, "_");
 
-    // Ensure directory exists
-    const uploadDir = path.join(process.cwd(), "public/uploads");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+    const storage = getAdminStorage();
+    const bucket = storage.bucket();
+    const fileRef = bucket.file(`uploads/${filename}`);
 
-    const filepath = path.join(uploadDir, filename);
-    await writeFile(filepath, buffer);
+    const uuid = crypto.randomUUID();
+
+    await fileRef.save(buffer, {
+      metadata: {
+        contentType: file.type,
+        metadata: {
+          firebaseStorageDownloadTokens: uuid,
+        }
+      },
+    });
+
+    const url = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(fileRef.name)}?alt=media&token=${uuid}`;
 
     return NextResponse.json({ 
       success: true, 
-      url: `/uploads/${filename}` 
+      url
     });
   } catch (error) {
     console.error("Error occurred while saving the file.", error);

@@ -14,9 +14,9 @@ export function getAdminAuth() {
           credential: admin.credential.cert({
             projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
             clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-            // Next.js replaces \n in env vars — restore actual newlines
             privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(/\\n/g, "\n"),
           }),
+          storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
         });
       } else {
         console.warn("Firebase Admin environment variables missing. Initialization skipped.");
@@ -43,4 +43,9 @@ export async function verifyToken(req: NextRequest): Promise<admin.auth.DecodedI
   } catch {
     throw new Error("Invalid or expired Firebase token");
   }
+}
+
+export function getAdminStorage() {
+  getAdminAuth(); // ensure initialized
+  return admin.storage();
 }
