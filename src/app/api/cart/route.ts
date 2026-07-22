@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
       // Reconstruct the Gig structure
       const packagesMap: Record<string, GigPackage> = {};
       item.gig.packages.forEach((pkg: any) => {
-        packagesMap[pkg.tier] = {
+        packagesMap[pkg.tier.toLowerCase()] = {
           price: pkg.price,
           deliveryTime: pkg.deliveryDays,
           revisions: pkg.revisions,
@@ -55,8 +55,8 @@ export async function GET(req: NextRequest) {
 
       return {
         gig,
-        tier: item.tier as PackageTier,
-        pkg: packagesMap[item.tier],
+        tier: item.tier.toLowerCase() as PackageTier,
+        pkg: packagesMap[item.tier.toLowerCase()],
         quantity: 1, // Currently fixed at 1
       };
     });

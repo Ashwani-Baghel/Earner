@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ─── Step 3a: Build request body for BankLinkr ───────────────────────────
-    const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/webhooks/banklinkr`;
+    const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/payments/callback`;
 
     // Convert USD price to INR before sending to gateway
     const inrAmount = Math.round(Number(price) * 83.5);

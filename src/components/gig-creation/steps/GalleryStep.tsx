@@ -20,9 +20,9 @@ export function GalleryStep({ data, updateForm, nextStep, prevStep }: Props) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate size (e.g. 5MB for images)
-    if (file.size > 5 * 1024 * 1024) {
-      setError("File size must be under 5MB");
+    // Validate size (e.g. 4MB for images due to Vercel limits)
+    if (file.size > 4 * 1024 * 1024) {
+      setError("File size must be under 4MB");
       return;
     }
 

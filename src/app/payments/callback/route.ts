@@ -9,7 +9,15 @@ import { prisma } from "@/lib/prisma";
  */
 export async function POST(req: NextRequest) {
   try {
-    const payload = await req.json();
+    let payload;
+    const contentType = req.headers.get("content-type") || "";
+    
+    if (contentType.includes("text/plain")) {
+      const text = await req.text();
+      payload = JSON.parse(text);
+    } else {
+      payload = await req.json();
+    }
 
     console.log("📩 BankLinkr Webhook received:", JSON.stringify(payload, null, 2));
 
@@ -27,14 +35,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid webhook payload" }, { status: 400 });
     }
 
-    // ─── Find the order by txnId (paymentIntentId) ───────────────────────────
+    // ─── Find the order by orderId or txnId (paymentIntentId) ────────────────
     const order = await prisma.order.findFirst({
-      where: { paymentIntentId: txnId }
+      where: {
+        OR: [
+          { id: orderId || "" },
+          { paymentIntentId: txnId || "" }
+        ]
+      }
     });
 
     if (!order) {
       // Might be a duplicate or old event — return 200 to prevent BankLinkr from retrying
-      console.warn(`Webhook: Order not found for txnId ${txnId}. Possibly already processed.`);
+      console.warn(`Webhook: Order not found for orderId ${orderId} / txnId ${txnId}.`);
       return NextResponse.json({ received: true });
     }
 

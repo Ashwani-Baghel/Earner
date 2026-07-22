@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, Suspense } from "react";
+import { useEffect, Suspense, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
@@ -13,15 +13,13 @@ function SuccessContent() {
   const { clearCart } = useCart();
   const router = useRouter();
 
+  const hasCleared = useRef(false);
+
   useEffect(() => {
-    // We assume checkout was successful, so clear the cart.
-    // In a real app with multiple items in the cart, we'd only remove the paid item.
-    // Since we check out individually, clearing the specific item would be better, 
-    // but clearing the cart is okay for now if it's the only item.
-    
-    // For safety, let's not blindly clear the whole cart in a real multi-item cart,
-    // but the task said "Clears the local Cart context". We'll just call it.
-    clearCart();
+    if (!hasCleared.current) {
+      clearCart();
+      hasCleared.current = true;
+    }
   }, [clearCart]);
 
   if (!orderId) {
