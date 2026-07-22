@@ -189,26 +189,34 @@ export default function SellerDashboard() {
                     <th className="px-6 py-4 text-right">Orders</th>
                     <th className="px-6 py-4 text-right">Rating</th>
                     <th className="px-8 py-4 text-right">Starting At</th>
-                    <th className="px-6 py-4 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {gigs.map((gig) => (
                     <tr key={gig.id} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="px-8 py-5">
-                        <Link href={`/gig/${gig.id}`} className="flex items-center gap-4">
-                          <div className="w-16 h-12 rounded-lg bg-slate-200 overflow-hidden flex-shrink-0 border border-slate-200">
-                            {gig.images?.[0] ? (
-                              <img src={gig.images[0]} alt={gig.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                            ) : (
-                              <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs">No img</div>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-slate-900 line-clamp-1 group-hover:text-teal-600 transition-colors">{gig.title}</p>
-                            <p className="text-xs text-slate-500 mt-1">{gig.category}</p>
-                          </div>
-                        </Link>
+                        <div className="flex items-center justify-between gap-4">
+                          <Link href={`/gig/${gig.id}`} className="flex items-center gap-4 flex-1">
+                            <div className="w-16 h-12 rounded-lg bg-slate-200 overflow-hidden flex-shrink-0 border border-slate-200">
+                              {gig.images?.[0] ? (
+                                <img src={gig.images[0]} alt={gig.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                              ) : (
+                                <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs">No img</div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-slate-900 line-clamp-1 group-hover:text-teal-600 transition-colors">{gig.title}</p>
+                              <p className="text-xs text-slate-500 mt-1">{gig.category}</p>
+                            </div>
+                          </Link>
+                          <Link 
+                            href={`/seller/gigs/edit/${gig.id}`}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
+                            title="Edit Gig"
+                          >
+                            <Edit size={16} />
+                          </Link>
+                        </div>
                       </td>
                       <td className="px-6 py-5">
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${gig.status === 'ACTIVE' ? 'bg-teal-50 text-teal-700' :
@@ -234,15 +242,6 @@ export default function SellerDashboard() {
                       </td>
                       <td className="px-8 py-5 text-right font-bold text-teal-700 text-sm">
                         {gig.basicPackage?.price ? `₹${Math.round(gig.basicPackage.price * 83.5).toLocaleString("en-IN")}` : "—"}
-                      </td>
-                      <td className="px-6 py-5 text-center">
-                        <Link 
-                          href={`/seller/gigs/edit/${gig.id}`}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
-                          title="Edit Gig"
-                        >
-                          <Edit size={16} />
-                        </Link>
                       </td>
                     </tr>
                   ))}
