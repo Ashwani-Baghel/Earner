@@ -108,6 +108,10 @@ export async function PUT(req: NextRequest, { params }: RouteCtx) {
       subcategoryId?: string;
       tags?: string[];
       status?: "ACTIVE" | "PAUSED";
+      packages?: any[];
+      faqs?: any[];
+      requirements?: any[];
+      media?: any[];
     };
 
     const updated = await prisma.gig.update({
@@ -116,9 +120,66 @@ export async function PUT(req: NextRequest, { params }: RouteCtx) {
         ...(body.title ? { title: body.title.trim() } : {}),
         ...(body.description ? { description: body.description.trim() } : {}),
         ...(body.categoryId ? { categoryId: body.categoryId } : {}),
-        ...(body.subcategoryId !== undefined ? { subcategoryId: body.subcategoryId } : {}),
+        ...(body.subcategoryId !== undefined ? { subcategoryId: body.subcategoryId || null } : {}),
         ...(body.tags ? { tags: body.tags } : {}),
         ...(body.status ? { status: body.status } : {}),
+
+        // Relations replacement
+        ...(body.packages ? {
+          packages: {
+            deleteMany: {},
+            create: body.packages.map((pkg: any) => ({
+              tier: pkg.tier,
+              name: pkg.name,
+              description: pkg.description,
+              price: Number(pkg.price),
+              deliveryDays: Number(pkg.deliveryDays),
+              revisions: Number(pkg.revisions),
+              features: pkg.features || []
+            }))
+          }
+        } : {}),
+
+        ...(body.faqs ? {
+          faqs: {
+            deleteMany: {},
+            create: body.faqs.map((faq: any) => ({
+              question: faq.question,
+              answer: faq.answer
+            }))
+          }
+        } : {}),
+
+        ...(body.requirements ? {
+          requirements: {
+            deleteMany: {},
+            create: body.requirements.map((req: any) => ({
+              question: req.question,
+              type: req.type,
+              required: req.required,
+              options: req.options || []
+            }))
+          }
+        } : {}),
+
+        ...(body.media ? {
+          media: {
+            deleteMany: {},
+            create: body.media.map((m: any, idx: number) => ({
+              url: m.url,
+              type: m.type,
+              order: idx,
+              isPrimary: idx === 0
+            }))
+          }
+        } : {}),
+      },
+      include: {
+        seller: { select: { id: true, name: true, avatar: true } },
+        packages: true,
+        faqs: true,
+        requirements: true,
+        media: true
       },
     });
 

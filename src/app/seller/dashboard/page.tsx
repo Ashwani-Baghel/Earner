@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { Info, Briefcase, ChevronRight, CheckCircle2, Loader2 } from "lucide-react";
+import { Info, Briefcase, ChevronRight, CheckCircle2, Loader2, Edit } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -189,6 +189,7 @@ export default function SellerDashboard() {
                     <th className="px-6 py-4 text-right">Orders</th>
                     <th className="px-6 py-4 text-right">Rating</th>
                     <th className="px-8 py-4 text-right">Starting At</th>
+                    <th className="px-6 py-4 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -233,6 +234,15 @@ export default function SellerDashboard() {
                       </td>
                       <td className="px-8 py-5 text-right font-bold text-teal-700 text-sm">
                         {gig.basicPackage?.price ? `₹${Math.round(gig.basicPackage.price * 83.5).toLocaleString("en-IN")}` : "—"}
+                      </td>
+                      <td className="px-6 py-5 text-center">
+                        <Link 
+                          href={`/seller/gigs/edit/${gig.id}`}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+                          title="Edit Gig"
+                        >
+                          <Edit size={16} />
+                        </Link>
                       </td>
                     </tr>
                   ))}

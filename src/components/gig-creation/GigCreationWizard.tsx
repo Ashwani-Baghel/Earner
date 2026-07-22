@@ -7,6 +7,10 @@ import { DescriptionFaqStep } from "./steps/DescriptionFaqStep";
 import { RequirementsStep } from "./steps/RequirementsStep";
 import { GalleryStep } from "./steps/GalleryStep";
 import { PublishStep } from "./steps/PublishStep";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { Loader2 } from "lucide-react";
 
 export type GigFormData = {
   title: string;
@@ -46,36 +50,90 @@ const defaultData: GigFormData = {
 
 const STEPS = ["Overview", "Pricing", "Description & FAQ", "Requirements", "Gallery", "Publish"];
 
-export function GigCreationWizard() {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState<GigFormData>(defaultData);
-  const [isLoaded, setIsLoaded] = useState(false);
+export interface WizardProps {
+  initialData?: GigFormData;
+  gigId?: string;
+}
 
-  // Load from local storage on mount
+export function GigCreationWizard({ initialData, gigId }: WizardProps) {
+  const { user } = useAuth();
+  const router = useRouter();
+  const [currentStep, setCurrentStep] = useState(0);
+  const [formData, setFormData] = useState<GigFormData>(initialData || defaultData);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const draftKey = gigId ? null : (user ? `earner_gig_draft_${user.uid}` : "earner_gig_draft");
+
+  // Load from local storage on mount or when user changes
   useEffect(() => {
-    const saved = localStorage.getItem("earner_gig_draft");
-    if (saved) {
-      try {
-        setFormData(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to parse saved gig draft", e);
+    if (user === undefined) return; // wait for auth state
+    if (gigId && initialData) {
+      setFormData(initialData);
+      setIsLoaded(true);
+      return;
+    }
+    
+    if (draftKey) {
+      const saved = localStorage.getItem(draftKey);
+      if (saved) {
+        try {
+          setFormData(JSON.parse(saved));
+        } catch (e) {
+          console.error("Failed to parse saved gig draft", e);
+        }
+      } else {
+        setFormData(defaultData);
       }
+    } else {
+      setFormData(defaultData);
     }
     setIsLoaded(true);
-  }, []);
+  }, [user, draftKey, gigId, initialData]);
 
   // Save to local storage on change
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem("earner_gig_draft", JSON.stringify(formData));
+    if (isLoaded && draftKey) {
+      localStorage.setItem(draftKey, JSON.stringify(formData));
     }
-  }, [formData, isLoaded]);
+  }, [formData, isLoaded, draftKey]);
 
   const clearForm = () => {
     if (window.confirm("Are you sure you want to clear all gig details? This action cannot be undone.")) {
       setFormData(defaultData);
-      localStorage.removeItem("earner_gig_draft");
+      if (draftKey) localStorage.removeItem(draftKey);
       setCurrentStep(0);
+    }
+  };
+
+  const clearDraftOnPublish = () => {
+    setFormData(defaultData);
+    if (draftKey) localStorage.removeItem(draftKey);
+    setCurrentStep(0);
+  };
+
+  const handleSaveChanges = async () => {
+    if (!user || !gigId) return;
+    setSaving(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/gigs/${gigId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to update gig");
+      }
+      toast.success("Gig changes saved successfully!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save changes");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -92,33 +150,53 @@ export function GigCreationWizard() {
     <div className="bg-[#f7f7f7] min-h-screen pb-20">
       {/* Step Progress Bar */}
       <div className="bg-white border-b border-[#e4e5e7] sticky top-0 z-10 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-6">
-          <div className="overflow-x-auto no-scrollbar py-1 w-full">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 sm:gap-6">
+          <div className="flex-1 overflow-x-auto no-scrollbar py-1">
           <ul className="flex items-center min-w-max py-4 pr-4">
             {STEPS.map((step, idx) => (
               <li key={idx} className="flex items-center">
-                <div className={`flex items-center justify-center h-8 w-8 rounded-full border-2 text-sm font-bold transition-colors ${
-                  idx === currentStep ? "border-[#1dbf73] bg-[#1dbf73] text-white" :
-                  idx < currentStep ? "border-[#1dbf73] text-[#1dbf73]" : "border-[#e4e5e7] text-[#c5c6c9]"
-                }`}>
-                  {idx + 1}
-                </div>
-                <span className={`ml-2 text-sm font-semibold transition-colors ${idx <= currentStep ? "text-[#404145]" : "text-[#c5c6c9]"}`}>
-                  {step}
-                </span>
+                <button 
+                  onClick={() => setCurrentStep(idx)}
+                  className="flex items-center group outline-none focus-visible:ring-2 focus-visible:ring-[#1dbf73] rounded-full pr-2"
+                >
+                  <div className={`flex items-center justify-center h-8 w-8 rounded-full border-2 text-sm font-bold transition-all ${
+                    idx === currentStep ? "border-[#19a463] bg-[#19a463] text-white shadow-md scale-110" :
+                    (gigId || idx < currentStep) ? "border-[#1dbf73] text-[#1dbf73] group-hover:bg-[#1dbf73]/10" : "border-[#e4e5e7] text-[#c5c6c9] group-hover:border-[#1dbf73] group-hover:text-[#1dbf73]"
+                  }`}>
+                    {idx + 1}
+                  </div>
+                  <span className={`ml-2 text-sm transition-colors ${
+                    idx === currentStep ? "text-[#222325] font-bold" : 
+                    (gigId || idx < currentStep) ? "text-[#404145] font-semibold" : "text-[#c5c6c9] font-semibold group-hover:text-[#74767e]"
+                  }`}>
+                    {step}
+                  </span>
+                </button>
                 {idx < STEPS.length - 1 && (
-                  <div className={`w-8 sm:w-16 h-[2px] mx-2 sm:mx-4 transition-colors ${idx < currentStep ? "bg-[#1dbf73]" : "bg-[#e4e5e7]"}`} />
+                  <div className={`w-8 sm:w-16 h-[2px] mx-2 sm:mx-4 transition-colors ${(gigId || idx < currentStep) ? "bg-[#1dbf73]" : "bg-[#e4e5e7]"}`} />
                 )}
               </li>
             ))}
           </ul>
           </div>
-          <button 
-            onClick={clearForm}
-            className="hidden md:flex flex-shrink-0 items-center justify-center px-5 py-2.5 text-sm font-semibold text-red-600 bg-red-50 border border-red-100 hover:bg-red-100 hover:border-red-200 rounded-lg transition-all shadow-sm"
-          >
-            Clear Details
-          </button>
+          <div className="flex items-center gap-3 flex-shrink-0 ml-auto bg-white py-2 pl-2">
+            {gigId && (
+              <button
+                onClick={handleSaveChanges}
+                disabled={saving}
+                className="hidden md:flex flex-shrink-0 items-center justify-center px-4 py-2.5 text-sm font-bold text-white bg-[#1dbf73] hover:bg-[#19a463] rounded-lg transition-all shadow-sm disabled:opacity-50"
+              >
+                {saving && <Loader2 size={16} className="animate-spin mr-2" />}
+                Save Changes
+              </button>
+            )}
+            <button 
+              onClick={clearForm}
+              className="hidden md:flex flex-shrink-0 items-center justify-center px-4 py-2.5 text-sm font-semibold text-red-600 bg-red-50 border border-red-100 hover:bg-red-100 hover:border-red-200 rounded-lg transition-all shadow-sm"
+            >
+              Clear Details
+            </button>
+          </div>
         </div>
       </div>
 
@@ -132,13 +210,13 @@ export function GigCreationWizard() {
       </div>
 
       <div className="max-w-4xl mx-auto mt-6 md:mt-10 px-4">
-        <div className="bg-white rounded-lg border border-[#e4e5e7] p-6 sm:p-10">
+        <div className="bg-white rounded-xl shadow-sm border border-[#e4e5e7] p-6 sm:p-10">
           {currentStep === 0 && <BasicInfoStep data={formData} updateForm={updateForm} nextStep={nextStep} />}
           {currentStep === 1 && <PricingStep data={formData} updateForm={updateForm} nextStep={nextStep} prevStep={prevStep} />}
           {currentStep === 2 && <DescriptionFaqStep data={formData} updateForm={updateForm} nextStep={nextStep} prevStep={prevStep} />}
           {currentStep === 3 && <RequirementsStep data={formData} updateForm={updateForm} nextStep={nextStep} prevStep={prevStep} />}
           {currentStep === 4 && <GalleryStep data={formData} updateForm={updateForm} nextStep={nextStep} prevStep={prevStep} />}
-          {currentStep === 5 && <PublishStep data={formData} prevStep={prevStep} />}
+          {currentStep === 5 && <PublishStep data={formData} prevStep={prevStep} onPublishSuccess={clearDraftOnPublish} gigId={gigId} onSaveEdit={handleSaveChanges} savingEdit={saving} />}
         </div>
       </div>
     </div>
