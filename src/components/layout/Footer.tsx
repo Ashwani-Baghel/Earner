@@ -1,20 +1,16 @@
 import Link from "next/link";
+import { CATEGORIES } from "@/lib/mock-data/categories";
+
+const dynamicCategories = CATEGORIES.map((cat) => ({
+  label: cat.name,
+  href: `/categories/${cat.slug}`,
+}));
 
 const footerSections = [
   {
     title: "Categories",
     links: [
-      { label: "Graphics & Design", href: "#" },
-      { label: "Digital Marketing", href: "#" },
-      { label: "Writing & Translation", href: "#" },
-      { label: "Video & Animation", href: "#" },
-      { label: "Music & Audio", href: "#" },
-      { label: "Programming & Tech", href: "#" },
-      { label: "Data", href: "#" },
-      { label: "Business", href: "#" },
-      { label: "Lifestyle", href: "#" },
-      { label: "Photography", href: "#" },
-      { label: "End-to-End Projects", href: "#" },
+      ...dynamicCategories,
       { label: "Sitemap", href: "#" },
     ],
   },

@@ -86,7 +86,7 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
   }
 
   // INR conversion
-  const inrAmount = Math.round(item.pkg.price * 83.5);
+  const inrAmount = Math.round(item.pkg.price);
   const inrFormatted = `₹${inrAmount.toLocaleString("en-IN")}`;
 
   // Computed order ref (available after payment initiated)

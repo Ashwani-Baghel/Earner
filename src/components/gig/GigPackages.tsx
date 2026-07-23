@@ -21,7 +21,7 @@ export function GigPackages({ gig }: GigPackagesProps) {
   const { favoriteIds, toggleFavorite } = useFavorites();
   const { user } = useAuth();
   const isFavorite = favoriteIds.includes(gig.id);
-  const isOwnGig = user?.uid === gig.sellerId;
+  const isOwnGig = user?.uid === gig.seller.uid;
 
   const tiers: PackageTier[] = ["basic", "standard", "premium"];
   const pkg = gig?.packages?.[activeTier];
@@ -54,11 +54,11 @@ export function GigPackages({ gig }: GigPackagesProps) {
 
       {/* Package details */}
       <div className="p-5">
-        <div className="flex items-start justify-between mb-3">
-          <h3 className="font-bold text-[#404145]">{pkg.name}</h3>
-          <span className="text-2xl font-bold text-[#404145]">{formatCurrency(pkg.price)}</span>
+        <div className="flex flex-col items-start gap-1 mb-3">
+          <h3 className="font-bold text-[#404145] text-lg break-words break-all line-clamp-2">{pkg.name}</h3>
+          <span className="text-2xl font-bold text-[#404145] mt-1">{formatCurrency(pkg.price)}</span>
         </div>
-        <p className="text-sm text-[#74767e] mb-4 leading-relaxed">{pkg.description}</p>
+        <p className="text-sm text-[#74767e] mb-4 leading-relaxed break-words break-all line-clamp-[10]">{pkg.description}</p>
 
         <div className="flex items-center gap-4 mb-4 text-sm text-[#404145]">
           <span className="flex items-center gap-1.5">

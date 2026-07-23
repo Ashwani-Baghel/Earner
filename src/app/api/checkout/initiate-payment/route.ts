@@ -61,8 +61,8 @@ export async function POST(req: NextRequest) {
       // ─── Mock fallback for local development ─────────────────────────────
       console.warn("⚠️  BankLinkr credentials not configured — using mock payment response.");
       const mockTxnId = `TXN${Date.now()}${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-      // Convert USD price to INR for the QR / UPI intent (1 USD ≈ 83.5 INR)
-      const inrAmount = Math.round(Number(price) * 83.5);
+      // Use native INR price for the QR / UPI intent
+      const inrAmount = Math.round(Number(price));
       return NextResponse.json({
         success: true,
         message: "Payment initiated successfully",
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
     const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/payments/callback`;
 
     // Convert USD price to INR before sending to gateway
-    const inrAmount = Math.round(Number(price) * 83.5);
+    const inrAmount = Math.round(Number(price));
 
     const gatewayPayload = {
       merchantId,

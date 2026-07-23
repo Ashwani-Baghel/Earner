@@ -27,10 +27,10 @@ function BuyerDashboardContent() {
   const searchParams = useSearchParams();
   const selectedCategory = searchParams.get("category");
 
-  const [fetching, setFetching]           = useState(true);
+  const [fetching, setFetching] = useState(true);
 
   const [gigsByCategory, setGigsByCategory] = useState<Record<string, Gig[]>>({});
-  const [error, setError]                 = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   /* ── Auth guard ── */
   useEffect(() => {
@@ -88,9 +88,9 @@ function BuyerDashboardContent() {
     );
   }
 
-  const firstName     = user?.displayName?.split(" ")[0] ?? "there";
+  const firstName = user?.displayName?.split(" ")[0] ?? "there";
   const totalCategories = Object.keys(gigsByCategory).length;
-  const totalGigs       = Object.values(gigsByCategory).flat().length;
+  const totalGigs = Object.values(gigsByCategory).flat().length;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -124,9 +124,9 @@ function BuyerDashboardContent() {
         {/* ── Tip Cards Row ── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { icon: Search,    label: "Find a service", sub: "Search across 500+ categories",   href: "/search" },
-            { icon: FileText,  label: "Post a brief",   sub: "Get tailored offers from sellers", href: "/search" },
-            { icon: Smartphone,label: "My Orders",      sub: "Track your active orders",         href: "/orders" },
+            { icon: Search, label: "Find a service", sub: "Search across 500+ categories", href: "/search" },
+            { icon: FileText, label: "Post a brief", sub: "Get tailored offers from sellers", href: "/search" },
+            { icon: Smartphone, label: "My Orders", sub: "Track your active orders", href: "/orders" },
           ].map(({ icon: Icon, label, sub, href }) => (
             <Link
               key={label}
@@ -183,10 +183,10 @@ function BuyerDashboardContent() {
                       <Link
                         key={gig.id}
                         href={`/gig/${gig.id}`}
-                        className="group flex-shrink-0 w-[260px] bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all snap-start"
+                        className="group flex-shrink-0 w-[310px] bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all snap-start flex flex-col"
                       >
                         {/* Thumbnail */}
-                        <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+                        <div className="relative aspect-video overflow-hidden bg-slate-100">
                           <img
                             src={thumb}
                             alt={gig.title}
@@ -195,7 +195,7 @@ function BuyerDashboardContent() {
                         </div>
 
                         {/* Card Body */}
-                        <div className="p-4">
+                        <div className="p-4 flex flex-col flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <Avatar
                               src={gig.seller?.avatar}
@@ -208,11 +208,11 @@ function BuyerDashboardContent() {
                             </span>
                           </div>
 
-                          <h3 className="text-sm font-semibold text-slate-900 line-clamp-2 mb-2 group-hover:text-teal-700 transition-colors">
+                          <h3 className="text-sm font-semibold text-slate-900 line-clamp-2 min-h-[40px] mb-2 group-hover:text-teal-700 transition-colors break-words break-all" title={gig.title}>
                             {gig.title}
                           </h3>
 
-                          <div className="flex items-center gap-1 mb-3">
+                          <div className="flex items-center gap-1 mb-4">
                             <Star size={12} className="text-amber-400 fill-amber-400" />
                             <span className="text-xs font-bold text-slate-800">
                               {gig.rating > 0 ? gig.rating.toFixed(1) : "New"}
@@ -222,10 +222,10 @@ function BuyerDashboardContent() {
                             )}
                           </div>
 
-                          <div className="border-t border-slate-100 pt-3 flex items-center justify-between">
+                          <div className="border-t border-slate-100 pt-3 mt-auto flex items-center justify-between">
                             <span className="text-xs text-slate-400 font-medium">Starting at</span>
                             <span className="text-sm font-bold text-slate-900">
-                              ₹{price > 0 ? Math.round(price * 83.5).toLocaleString("en-IN") : "41,999"}
+                              ₹{price > 0 ? Math.round(price).toLocaleString("en-IN") : "41,999"}
                             </span>
                           </div>
                         </div>

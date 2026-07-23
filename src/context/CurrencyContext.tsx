@@ -21,7 +21,7 @@ export const COUNTRIES: CountryOption[] = [
 interface CurrencyContextType {
   selectedCountry: CountryOption;
   setSelectedCountry: (countryCode: string) => void;
-  formatPrice: (amountInUSD: number) => string;
+  formatPrice: (amountInINR: number) => string;
   isLoadingRates: boolean;
 }
 
@@ -30,7 +30,7 @@ const defaultCountry = COUNTRIES.find(c => c.code === "IN") || COUNTRIES[0];
 const CurrencyContext = createContext<CurrencyContextType>({
   selectedCountry: defaultCountry,
   setSelectedCountry: () => {},
-  formatPrice: (amount) => `₹${Math.round(amount * 83.5).toLocaleString("en-IN")}`,
+  formatPrice: (amount) => `₹${Math.round(amount).toLocaleString("en-IN")}`,
   isLoadingRates: true,
 });
 
@@ -38,12 +38,12 @@ export const useCurrency = () => useContext(CurrencyContext);
 
 // Fallback rates in case the API fails
 const FALLBACK_RATES: Record<string, number> = {
-  USD: 1,
-  GBP: 0.79,
-  INR: 83.5,
-  EUR: 0.92,
-  AUD: 1.52,
-  CAD: 1.36,
+  INR: 1,
+  USD: 0.012, // 1 / 83.5
+  GBP: 0.0094,
+  EUR: 0.011,
+  AUD: 0.018,
+  CAD: 0.016,
 };
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
@@ -64,7 +64,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     
     async function fetchRates() {
       try {
-        const res = await fetch("https://open.er-api.com/v6/latest/USD");
+        const res = await fetch("https://open.er-api.com/v6/latest/INR");
         if (!res.ok) throw new Error("Failed to fetch rates");
         const data = await res.json();
         
@@ -93,9 +93,9 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const formatPrice = useCallback((amountInUSD: number) => {
+  const formatPrice = useCallback((amountInINR: number) => {
     const rate = rates[selectedCountry.currency] || 1;
-    const convertedAmount = amountInUSD * rate;
+    const convertedAmount = amountInINR * rate;
     
     return new Intl.NumberFormat(selectedCountry.locale, {
       style: "currency",

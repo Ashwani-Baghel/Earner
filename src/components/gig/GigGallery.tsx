@@ -20,7 +20,7 @@ export function GigGallery({ images, title }: GigGalleryProps) {
     <>
       <div className="rounded-xl overflow-hidden border border-[#e4e5e7]">
         {/* Main image */}
-        <div className="relative aspect-[4/3] bg-[#f5f5f5] cursor-zoom-in" onClick={() => setLightbox(true)}>
+        <div className="relative aspect-video max-h-[600px] w-full bg-[#f5f5f5] cursor-zoom-in" onClick={() => setLightbox(true)}>
           <Image src={validImages[current]} alt={`${title} - image ${current + 1}`} fill className="object-cover" unoptimized />
           {validImages.length > 1 && (
             <>
@@ -53,7 +53,7 @@ export function GigGallery({ images, title }: GigGalleryProps) {
           <button className="absolute top-4 right-4 text-white/80 hover:text-white" onClick={() => setLightbox(false)}>
             <X size={28} />
           </button>
-          <div className="relative w-[90vw] max-w-4xl aspect-[4/3]" onClick={(e) => e.stopPropagation()}>
+          <div className="relative w-[90vw] max-w-4xl aspect-video max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
             <Image src={validImages[current]} alt={title} fill className="object-contain" unoptimized />
           </div>
           {validImages.length > 1 && (

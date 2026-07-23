@@ -134,7 +134,7 @@ export default async function GigDetailPage({ params }: Props) {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Left column */}
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl md:text-3xl font-bold text-[#404145] mb-4">{gig.title}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-[#404145] mb-4 break-words break-all line-clamp-3">{gig.title}</h1>
 
           {/* Seller chip */}
           <Link href={`/seller/${gig.seller.username}`} className="flex items-center gap-3 mb-4 group w-fit">
@@ -157,7 +157,7 @@ export default async function GigDetailPage({ params }: Props) {
           {/* Description */}
           <section className="mt-8">
             <h2 className="text-xl font-bold text-[#404145] mb-4">About This Gig</h2>
-            <p className="text-sm text-[#404145] leading-relaxed whitespace-pre-line">{gig.description}</p>
+            <p className="text-sm text-[#404145] leading-relaxed whitespace-pre-line break-words break-all">{gig.description}</p>
           </section>
 
           {/* Tags */}
