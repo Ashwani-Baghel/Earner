@@ -2,15 +2,22 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { Info, Briefcase, ChevronRight, CheckCircle2, Loader2, Edit } from "lucide-react";
+import { Info, Briefcase, ChevronRight, CheckCircle2, Loader2, Edit, Trash2, MoreHorizontal } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import Link from "next/link";
 import { format } from "date-fns";
+import toast from "react-hot-toast";
 
 export default function SellerDashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [fetching, setFetching] = useState(true);
+
+  // Delete modal state
+  const [gigToDelete, setGigToDelete] = useState<any>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -80,7 +87,27 @@ export default function SellerDashboard() {
     fetchData();
   }, [user]);
 
-
+  const handleDelete = async () => {
+    if (!gigToDelete || !user) return;
+    setIsDeleting(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/gigs/${gigToDelete.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to delete gig");
+      
+      toast.success("Gig deleted successfully");
+      setGigs(prev => prev.filter(g => g.id !== gigToDelete.id));
+      setGigToDelete(null);
+      setDeleteConfirmText("");
+    } catch (err: any) {
+      toast.error(err.message || "Could not delete gig.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   if (loading || fetching) return (
     <div className="flex items-center justify-center min-h-[100vh] ">
@@ -189,34 +216,26 @@ export default function SellerDashboard() {
                     <th className="px-6 py-4 text-right">Orders</th>
                     <th className="px-6 py-4 text-right">Rating</th>
                     <th className="px-8 py-4 text-right">Starting At</th>
+                    <th className="px-6 py-4"><span className="sr-only">Actions</span></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {gigs.map((gig) => (
                     <tr key={gig.id} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="px-8 py-5">
-                        <div className="flex items-center justify-between gap-4">
-                          <Link href={`/gig/${gig.id}`} className="flex items-center gap-4 flex-1">
-                            <div className="w-16 h-12 rounded-lg bg-slate-200 overflow-hidden flex-shrink-0 border border-slate-200">
-                              {gig.images?.[0] ? (
-                                <img src={gig.images[0]} alt={gig.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                              ) : (
-                                <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs">No img</div>
-                              )}
-                            </div>
-                            <div>
-                              <p className="text-sm font-bold text-slate-900 line-clamp-1 group-hover:text-teal-600 transition-colors">{gig.title}</p>
-                              <p className="text-xs text-slate-500 mt-1">{gig.category}</p>
-                            </div>
-                          </Link>
-                          <Link 
-                            href={`/seller/gigs/edit/${gig.id}`}
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
-                            title="Edit Gig"
-                          >
-                            <Edit size={16} />
-                          </Link>
-                        </div>
+                        <Link href={`/seller/gigs/edit/${gig.id}`} className="flex items-center gap-4">
+                          <div className="w-16 h-12 rounded-lg bg-slate-200 overflow-hidden flex-shrink-0 border border-slate-200">
+                            {gig.images?.[0] ? (
+                              <img src={gig.images[0]} alt={gig.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            ) : (
+                              <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs">No img</div>
+                            )}
+                          </div>
+                          <div className="max-w-[220px] sm:max-w-[300px]">
+                            <p title={gig.title} className="text-sm font-bold text-slate-900 line-clamp-2 leading-snug group-hover:text-teal-600 transition-colors break-words whitespace-normal">{gig.title}</p>
+                            <p className="text-xs text-slate-500 mt-1">{gig.category}</p>
+                          </div>
+                        </Link>
                       </td>
                       <td className="px-6 py-5">
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${gig.status === 'ACTIVE' ? 'bg-teal-50 text-teal-700' :
@@ -242,6 +261,51 @@ export default function SellerDashboard() {
                       </td>
                       <td className="px-8 py-5 text-right font-bold text-teal-700 text-sm">
                         {gig.basicPackage?.price ? `₹${Math.round(gig.basicPackage.price * 83.5).toLocaleString("en-IN")}` : "—"}
+                      </td>
+                      <td className="px-6 py-5 text-right">
+                        <div className="relative inline-block text-left">
+                          <button 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setOpenDropdownId(openDropdownId === gig.id ? null : gig.id);
+                            }}
+                            className="p-2 rounded-full hover:bg-slate-100 transition-colors focus:outline-none"
+                            title="Actions"
+                          >
+                            <MoreHorizontal size={20} className="text-slate-500" />
+                          </button>
+                          
+                          {openDropdownId === gig.id && (
+                            <>
+                              {/* Transparent overlay to close dropdown */}
+                              <div className="fixed inset-0 z-40" onClick={() => setOpenDropdownId(null)} />
+                              
+                              {/* Dropdown Menu */}
+                              <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-slate-200 shadow-xl rounded-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 origin-top-right">
+                                <Link 
+                                  href={`/seller/gigs/edit/${gig.id}`}
+                                  className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors w-full text-left"
+                                >
+                                  <Edit size={16} className="text-slate-400" /> 
+                                  Edit Gig
+                                </Link>
+                                <button 
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setGigToDelete(gig);
+                                    setOpenDropdownId(null);
+                                  }}
+                                  className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors w-full text-left"
+                                >
+                                  <Trash2 size={16} className="text-red-400" /> 
+                                  Delete Gig
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -287,6 +351,51 @@ export default function SellerDashboard() {
         )}
 
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {gigToDelete && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-fade-in-up">
+            <div className="flex items-center gap-3 text-red-600 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
+                <Trash2 size={20} />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">Delete Gig?</h3>
+            </div>
+            
+            <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+              This action cannot be undone. To permanently delete this gig, please type the gig ID to confirm: <br/><br/>
+              <strong className="font-mono bg-slate-100 px-2 py-1 rounded text-slate-800 break-all">{gigToDelete.id}</strong>
+            </p>
+            
+            <input 
+              type="text" 
+              value={deleteConfirmText} 
+              onChange={(e) => setDeleteConfirmText(e.target.value)} 
+              className="w-full border border-slate-300 rounded-lg px-4 py-2.5 mb-6 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
+              placeholder="Paste Gig ID here..."
+            />
+            
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => { setGigToDelete(null); setDeleteConfirmText(""); }} 
+                className="px-5 py-2.5 text-sm text-slate-600 font-bold hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                disabled={deleteConfirmText !== gigToDelete.id || isDeleting}
+                onClick={handleDelete}
+                className="px-5 py-2.5 text-sm bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-colors shadow-sm"
+              >
+                {isDeleting && <Loader2 size={16} className="animate-spin mr-2" />}
+                Delete Permanently
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
