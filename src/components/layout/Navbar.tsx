@@ -160,7 +160,7 @@ export function Navbar() {
                     <div className="absolute top-full left-0 bg-white border border-slate-200 shadow-xl rounded-xl py-2 w-52 hidden group-hover:block z-50 text-slate-800 font-medium text-[13px]">
                       <Link href="/seller/orders"   className="block px-4 py-2.5 hover:bg-slate-50 hover:text-teal-600 transition-colors">Manage Orders</Link>
                       <Link href="/seller/gigs"     className="block px-4 py-2.5 hover:bg-slate-50 hover:text-teal-600 transition-colors">My Gigs</Link>
-                      <Link href="/seller/dashboard" className="block px-4 py-2.5 hover:bg-slate-50 hover:text-teal-600 transition-colors">Earnings</Link>
+                      <Link href="/seller/earnings" className="block px-4 py-2.5 hover:bg-slate-50 hover:text-teal-600 transition-colors">Earnings</Link>
                     </div>
                   </div>
 
@@ -473,7 +473,7 @@ export function Navbar() {
                         <div className="pl-4 pb-2 space-y-1">
                           <Link href="/seller/orders" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-medium text-slate-600 py-2 hover:text-teal-600">Manage Orders</Link>
                           <Link href="/seller/gigs" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-medium text-slate-600 py-2 hover:text-teal-600">My Gigs</Link>
-                          <Link href="/seller/dashboard" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-medium text-slate-600 py-2 hover:text-teal-600">Earnings</Link>
+                          <Link href="/seller/earnings" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-medium text-slate-600 py-2 hover:text-teal-600">Earnings</Link>
                         </div>
                       )}
                     </div>
