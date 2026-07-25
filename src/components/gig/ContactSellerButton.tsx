@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MessageSquare, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useChat } from "@/context/ChatContext";
 import { db } from "@/lib/firebaseClient";
 import { collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 
@@ -15,6 +16,7 @@ interface ContactSellerProps {
 
 export function ContactSellerButton({ sellerId, sellerName = "Seller", sellerAvatar = null }: ContactSellerProps) {
   const { user } = useAuth();
+  const { openChat } = useChat();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -39,17 +41,19 @@ export function ContactSellerButton({ sellerId, sellerName = "Seller", sellerAva
       
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        if (data.participants && data.participants.includes(sellerId)) {
+        if (data.buyerId === user.uid && data.sellerId === sellerId) {
           existingConvId = doc.id;
         }
       });
 
       if (existingConvId) {
-        router.push(`/messages?c=${existingConvId}`);
+        openChat(existingConvId);
       } else {
         // Create new conversation
         const newConv = await addDoc(convRef, {
-          participants: [user.uid, sellerId],
+          participants: [user.uid, sellerId], // Kept for legacy arrays if needed
+          buyerId: user.uid,
+          sellerId: sellerId,
           participantDetails: {
             [user.uid]: {
               name: user.displayName || "You",
@@ -64,7 +68,7 @@ export function ContactSellerButton({ sellerId, sellerName = "Seller", sellerAva
           updatedAt: serverTimestamp()
         });
         
-        router.push(`/messages?c=${newConv.id}`);
+        openChat(newConv.id);
       }
     } catch (e: any) {
       console.error("Error creating conversation:", e);

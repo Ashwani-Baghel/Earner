@@ -8,6 +8,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { NotificationProvider } from "@/context/NotificationContext";
 import { FavoritesProvider } from "@/context/FavoritesContext";
+import { ChatProvider } from "@/context/ChatContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -31,7 +32,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <NotificationProvider>
             <FavoritesProvider>
               <CartProvider>
-                <ConditionalLayout>{children}</ConditionalLayout>
+                <ChatProvider>
+                  <ConditionalLayout>{children}</ConditionalLayout>
+                </ChatProvider>
               </CartProvider>
             </FavoritesProvider>
           </NotificationProvider>

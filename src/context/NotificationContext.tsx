@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useAuth } from "./AuthContext";
 import { toast, Toaster } from "react-hot-toast";
 import { db } from "@/lib/firebaseClient";
@@ -24,7 +25,25 @@ export const useNotification = () => useContext(NotificationContext);
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [rawMessages, setRawMessages] = useState<any[]>([]);
+
+  // Recalculate unreadCount when role changes or raw messages update
+  useEffect(() => {
+    if (!user) return;
+    const isSellerView = pathname?.startsWith("/seller");
+    const activeRole = isSellerView ? "seller" : "buyer";
+    
+    let unread = 0;
+    rawMessages.forEach(msg => {
+      // For backwards compatibility, if recipientRole is undefined, count it in both
+      if (msg.read === false && (!msg.recipientRole || msg.recipientRole === activeRole)) {
+        unread++;
+      }
+    });
+    setUnreadCount(unread);
+  }, [pathname, rawMessages, user]);
 
   useEffect(() => {
     if (!user || loading || !db) return;
@@ -39,17 +58,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     const unsubscribe = onSnapshot(q, (snapshot) => {
       if (!isMounted) return;
       
-      let unread = 0;
-      snapshot.docs.forEach((docSnap) => {
-        if (docSnap.data().read === false) unread++;
-      });
-      setUnreadCount(unread);
+      const msgs = snapshot.docs.map(doc => ({ id: doc.id, ref: doc.ref, ...doc.data() }));
+      setRawMessages(msgs);
 
       // Handle toasts for new messages
       snapshot.docChanges().forEach((change) => {
         if (change.type === "added") {
           const data = change.doc.data();
-          if (data.read === false) {
+          const isSellerView = window.location.pathname.startsWith("/seller");
+          const activeRole = isSellerView ? "seller" : "buyer";
+          
+          if (data.read === false && (!data.recipientRole || data.recipientRole === activeRole)) {
             const convId = change.doc.ref.parent.parent?.id;
             
             // If actively viewing this conversation, skip toast

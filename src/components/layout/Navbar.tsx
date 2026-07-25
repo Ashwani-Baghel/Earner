@@ -15,6 +15,7 @@ import toast from "react-hot-toast";
 
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
+import { useChat } from "../../context/ChatContext";
 import { useCart } from "../../context/CartContext";
 import { useFavorites } from "../../context/FavoritesContext";
 import { CategorySlider } from "./CategorySlider";
@@ -46,6 +47,7 @@ export function Navbar() {
   const router = useRouter();
   const { user, loading, signOut } = useAuth();
   const { unreadCount } = useNotification();
+  const { openChat } = useChat();
   const { totalItems } = useCart();
   const { favoriteIds } = useFavorites();
   const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
@@ -250,14 +252,14 @@ export function Navbar() {
                     )}
 
                     {/* Messages */}
-                    <Link href="/messages" className="relative text-slate-500 hover:text-teal-600 transition-colors">
+                    <button onClick={() => openChat()} className="relative text-slate-500 hover:text-teal-600 transition-colors">
                       <MessageSquare size={20} />
                       {unreadCount > 0 && (
                         <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">
                           {unreadCount > 99 ? "99+" : unreadCount}
                         </span>
                       )}
-                    </Link>
+                    </button>
 
                     {/* Saved (buyer only) */}
                     {!isSellerView && (
@@ -358,14 +360,14 @@ export function Navbar() {
               {/* Mobile Icons (shown on top for small screens) */}
               {user && (
                 <div className="flex lg:hidden items-center gap-4 mr-2">
-                  <Link href="/messages" className="relative text-slate-500 hover:text-teal-600 transition-colors">
+                  <button onClick={() => openChat()} className="relative text-slate-500 hover:text-teal-600 transition-colors">
                     <MessageSquare size={20} />
                     {unreadCount > 0 && (
                       <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">
                         {unreadCount > 99 ? "99+" : unreadCount}
                       </span>
                     )}
-                  </Link>
+                  </button>
 
                   {!isSellerView && !isAdmin && (
                     <>

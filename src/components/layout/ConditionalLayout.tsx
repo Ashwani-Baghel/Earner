@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
+import { ChatPopup } from "../chat/ChatPopup";
 import { ReactNode } from "react";
 
 export function ConditionalLayout({ children }: { children: ReactNode }) {
@@ -16,6 +17,7 @@ export function ConditionalLayout({ children }: { children: ReactNode }) {
       {!isDashboard && <Navbar />}
       <main className="flex-1">{children}</main>
       {!isDashboard && <Footer />}
+      {!isDashboard && <ChatPopup />}
     </>
   );
 }
