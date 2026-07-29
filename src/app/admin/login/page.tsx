@@ -48,7 +48,11 @@ export default function AdminLogin() {
         setLoading(false);
       }
     } catch (err: any) {
-      setLocalError(err.message || "Invalid credentials");
+      if (err.message === "auth/verification-required") {
+        setLocalError("Your email is not verified. A fresh verification link has been sent to your inbox. Please verify to access the admin panel.");
+      } else {
+        setLocalError(err.message || "Invalid credentials");
+      }
       setLoading(false);
     }
   };

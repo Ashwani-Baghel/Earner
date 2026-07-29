@@ -15,7 +15,7 @@ export function ConditionalLayout({ children }: { children: ReactNode }) {
   return (
     <>
       {!isDashboard && <Navbar />}
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 w-full max-w-[100vw] overflow-x-hidden">{children}</main>
       {!isDashboard && <Footer />}
       {!isDashboard && <ChatPopup />}
     </>

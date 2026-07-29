@@ -6,6 +6,8 @@ import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
 import { useAuth } from "../../context/AuthContext";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import disposableDomains from "disposable-email-domains";
 
 interface RegisterModalProps {
   open: boolean;
@@ -18,9 +20,11 @@ export function RegisterModal({ open, onClose, onSwitchToLogin }: RegisterModalP
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isSeller, setIsSeller] = useState(false);
+  const [showVerifyMessage, setShowVerifyMessage] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -28,7 +32,9 @@ export function RegisterModal({ open, onClose, onSwitchToLogin }: RegisterModalP
       setName("");
       setEmail("");
       setPassword("");
+      setConfirmPassword("");
       setShowPw(false);
+      setShowVerifyMessage(false);
       clearError();
     }
   }, [open, clearError]);
@@ -80,12 +86,30 @@ export function RegisterModal({ open, onClose, onSwitchToLogin }: RegisterModalP
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (password.length < 6) { return; }
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    const domain = email.split("@")[1];
+    if (domain && disposableDomains.includes(domain)) {
+      toast.error("Temporary email addresses are not allowed.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       await signUp(email, password, name);
-      await redirectAfterSignup();
-    } catch {
-      /* error handled by context */
+      // We shouldn't reach here because signUp throws verification-required
+    } catch (err: any) {
+      if (err.message === "auth/verification-required") {
+        setShowVerifyMessage(true);
+        // Clear fields in background
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
+        return;
+      }
+      toast.error(err.message || "Failed to create account");
     } finally {
       setSubmitting(false);
     }
@@ -94,18 +118,35 @@ export function RegisterModal({ open, onClose, onSwitchToLogin }: RegisterModalP
   const handleGoogle = async () => {
     try {
       await signInWithGoogle();
+      toast.success("Account created successfully!");
       await redirectAfterSignup();
-    } catch {
-      /* handled */
+    } catch (err: any) {
+      if (!err.message?.includes("popup-closed-by-user")) {
+        toast.error("Google sign up failed");
+      }
     }
   };
 
 
 
   return (
-    <Modal open={open} onClose={() => { clearError(); setName(""); setEmail(""); setPassword(""); setShowPw(false); onClose(); }} size="sm">
-      <div className="space-y-5">
-        <div className="text-center">
+    <Modal open={open} onClose={() => { clearError(); setName(""); setEmail(""); setPassword(""); setConfirmPassword(""); setShowPw(false); setShowVerifyMessage(false); onClose(); }} size="sm">
+      {showVerifyMessage ? (
+        <div className="text-center py-8 px-4 flex flex-col items-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
+            <Mail size={32} className="text-[#1dbf73]" />
+          </div>
+          <h2 className="text-2xl font-bold text-[#404145] mb-2">Check your email</h2>
+          <p className="text-[#74767e] mb-8 text-sm max-w-[280px]">
+            We&apos;ve sent a verification link to your email address. Please click the link to verify your account before logging in.
+          </p>
+          <Button onClick={onClose} className="w-full">
+            Got it, thanks!
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-5">
+          <div className="text-center">
           <h2 className="text-2xl font-bold text-[#404145]">Create an account</h2>
           <p className="text-sm text-[#74767e] mt-1">Already have an account?{" "}
             <button onClick={onSwitchToLogin} className="text-[#1dbf73] font-semibold hover:underline">Sign in</button>
@@ -156,6 +197,7 @@ export function RegisterModal({ open, onClose, onSwitchToLogin }: RegisterModalP
             <div className="relative">
               <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b5b6ba]" />
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="Enter your email"
+                autoComplete="off"
                 className="w-full pl-9 pr-4 py-2.5 border border-[#e4e5e7] rounded-lg text-sm focus:outline-none focus:border-[#1dbf73] focus:ring-1 focus:ring-[#1dbf73]"
               />
             </div>
@@ -165,6 +207,7 @@ export function RegisterModal({ open, onClose, onSwitchToLogin }: RegisterModalP
             <div className="relative">
               <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b5b6ba]" />
               <input type={showPw ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Min. 6 characters"
+                autoComplete="new-password"
                 className="w-full pl-9 pr-10 py-2.5 border border-[#e4e5e7] rounded-lg text-sm focus:outline-none focus:border-[#1dbf73] focus:ring-1 focus:ring-[#1dbf73]"
               />
               <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b5b6ba] hover:text-[#404145]">
@@ -174,6 +217,16 @@ export function RegisterModal({ open, onClose, onSwitchToLogin }: RegisterModalP
             {password.length > 0 && password.length < 6 && (
               <p className="mt-1 text-xs text-red-500">Password must be at least 6 characters</p>
             )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[#404145] mb-1">Confirm Password</label>
+            <div className="relative">
+              <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b5b6ba]" />
+              <input type={showPw ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required placeholder="Confirm your password"
+                autoComplete="new-password"
+                className="w-full pl-9 pr-10 py-2.5 border border-[#e4e5e7] rounded-lg text-sm focus:outline-none focus:border-[#1dbf73] focus:ring-1 focus:ring-[#1dbf73]"
+              />
+            </div>
           </div>
           
           <div className="flex items-center gap-2 mt-4">
@@ -200,6 +253,7 @@ export function RegisterModal({ open, onClose, onSwitchToLogin }: RegisterModalP
           <a href="#" className="underline hover:text-[#404145]">Privacy Policy</a>.
         </p>
       </div>
+      )}
     </Modal>
   );
 }

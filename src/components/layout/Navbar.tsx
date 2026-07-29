@@ -126,7 +126,7 @@ export function Navbar() {
       {/* ═══════════════════════════════════════════════════════════
           HEADER — sticky wrapper that holds BOTH rows
       ═══════════════════════════════════════════════════════════ */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
+      <header className="bg-white border-b border-slate-200 relative z-50">
 
         {/* ── ROW 1: Logo · Search · User Actions ── */}
         <div className="w-full max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
@@ -357,8 +357,8 @@ export function Navbar() {
                 )}
               </div>
 
-              {/* Mobile Icons (shown on top for small screens) */}
-              {user && (
+              {/* Mobile Icons / Auth actions (shown on top for small screens) */}
+              {user ? (
                 <div className="flex lg:hidden items-center gap-4 mr-2">
                   <button onClick={() => openChat()} className="relative text-slate-500 hover:text-teal-600 transition-colors">
                     <MessageSquare size={20} />
@@ -390,6 +390,18 @@ export function Navbar() {
                     </>
                   )}
                 </div>
+              ) : (
+                <div className="flex lg:hidden items-center gap-2 mr-1 text-xs font-semibold">
+                  <button onClick={() => setLoginOpen(true)} className="text-slate-700 hover:text-teal-600 px-2 py-1.5 transition-colors">
+                    Sign In
+                  </button>
+                  <button
+                    onClick={() => setRegisterOpen(true)}
+                    className="bg-teal-600 text-white px-3.5 py-1.5 rounded-full hover:bg-teal-700 transition-all shadow-sm"
+                  >
+                    Join
+                  </button>
+                </div>
               )}
 
               {/* Mobile hamburger */}
@@ -402,26 +414,6 @@ export function Navbar() {
             </div>
           </div>
 
-          {/* ── Mobile search bar (below main row on small screens) ── */}
-          {!isSellerView && (
-            <div className="md:hidden pb-3">
-              <form onSubmit={handleSearch} className="flex border border-slate-300 rounded-lg overflow-hidden bg-white h-10">
-                <div className="pl-3 flex items-center text-slate-400">
-                  <Search size={17} />
-                </div>
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search for services..."
-                  className="flex-1 px-3 text-sm outline-none bg-transparent text-slate-800 placeholder-slate-400"
-                />
-                <button type="submit" className="bg-teal-600 px-4 flex items-center hover:bg-teal-700 transition-colors">
-                  <Search size={15} className="text-white" />
-                </button>
-              </form>
-            </div>
-          )}
         </div>
 
         {/* ── ROW 2 (Buyer only): Category Slider — sits flush below Row 1 ── */}
@@ -436,22 +428,7 @@ export function Navbar() {
         {/* ── Mobile dropdown menu ── */}
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-slate-200 bg-white py-4 px-6 space-y-1 max-h-[80vh] overflow-y-auto">
-            {!user ? (
-              <>
-                <button
-                  onClick={() => { setLoginOpen(true); setMobileMenuOpen(false); }}
-                  className="block w-full text-left text-sm font-semibold text-slate-700 py-2.5"
-                >
-                  Log In
-                </button>
-                <button
-                  onClick={() => { setRegisterOpen(true); setMobileMenuOpen(false); }}
-                  className="block w-full text-left text-sm font-semibold text-teal-600 py-2.5"
-                >
-                  Sign Up
-                </button>
-              </>
-            ) : (
+            {!user ? null : (
               <>
                 <div className="flex items-center gap-3 pb-3 mb-1 border-b border-slate-100">
                   <Avatar src={user.photoURL} alt={user.displayName || "U"} size="md" initials={user.displayName?.[0]} />

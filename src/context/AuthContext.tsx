@@ -14,6 +14,8 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
   updateProfile,
+  sendPasswordResetEmail,
+  sendEmailVerification,
   User as FirebaseUser,
 } from "firebase/auth";
 import {
@@ -46,6 +48,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   error: string | null;
   clearError: () => void;
 }
@@ -100,6 +103,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        // ── Block unverified users from being set in state ──
+        if (!firebaseUser.emailVerified) {
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
         setLoading(true);
         // ── Role resolution ──────────────────────────────────────────────
         // Priority: Firestore (live) → localStorage (cached) → null (new user)
@@ -169,16 +179,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       // Set display name
       await updateProfile(cred.user, { displayName: name });
+      
+      // Send verification email (welcome message)
+      try {
+        await sendEmailVerification(cred.user);
+      } catch (emailErr) {
+        console.error("Failed to send verification email:", emailErr);
+      }
+
       // Save to Firestore
       await saveUserToFirestore({ ...cred.user, displayName: name });
-    } catch (e: unknown) {
-      const raw = e instanceof Error ? e.message : "Sign up failed";
-      const clean = raw
-        .replace("Firebase: ", "")
-        .replace(/\(auth\/.*?\)/, "")
-        .trim();
-      setError(clean || "Sign up failed. Please try again.");
-      throw e;
+
+      // Enforce email verification by signing them out immediately
+      await firebaseSignOut(auth);
+      setUser(null);
+      throw new Error("auth/verification-required");
+    } catch (e: any) {
+      if (e.message === "auth/verification-required") {
+        throw e;
+      }
+      
+      let errorMessage = "Sign up failed. Please try again.";
+      if (e.code === "auth/email-already-in-use" || e.message?.includes("email-already-in-use")) {
+        errorMessage = "This email is already registered. Please sign in instead.";
+      } else if (e.code === "auth/weak-password" || e.message?.includes("weak-password")) {
+        errorMessage = "Password should be at least 6 characters.";
+      } else if (e.code === "auth/invalid-email" || e.message?.includes("invalid-email")) {
+        errorMessage = "Invalid email address format.";
+      }
+
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
@@ -190,8 +221,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     try {
       setError(null);
-      await signInWithEmailAndPassword(auth, email, password);
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Check if email is verified
+      if (!cred.user.emailVerified) {
+        try {
+          await sendEmailVerification(cred.user);
+        } catch (emailErr) {
+          console.error("Failed to resend verification email:", emailErr);
+        }
+        await firebaseSignOut(auth);
+        setUser(null);
+        throw new Error("auth/verification-required");
+      }
     } catch (e: any) {
+      if (e.message === "auth/verification-required") {
+        throw e;
+      }
       if (
         e.code === "auth/invalid-credential" ||
         e.code === "auth/wrong-password" ||
@@ -237,6 +283,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  // ── Reset Password ─────────────────────────────────────────────────────
+  const resetPassword = async (email: string) => {
+    if (!auth) {
+      setError("Firebase not configured.");
+      return;
+    }
+    try {
+      setError(null);
+      await sendPasswordResetEmail(auth, email);
+    } catch (e: any) {
+      const raw = e instanceof Error ? e.message : "Password reset failed";
+      const clean = raw.replace("Firebase: ", "").replace(/\(auth\/.*?\)/, "").trim();
+      setError(clean || "Password reset failed. Please try again.");
+      throw e;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -247,6 +310,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signIn,
         signInWithGoogle,
         signOut,
+        resetPassword,
         error,
         clearError: () => setError(null),
       }}

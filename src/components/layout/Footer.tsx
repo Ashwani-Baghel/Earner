@@ -79,7 +79,7 @@ const socialLinks = [
 export function Footer() {
   return (
     <footer className="bg-white border-t border-[#e4e5e7] mt-auto">
-      <div className="container-Earner pt-16 pb-8 px-6 lg:px-8 max-w-[1440px] mx-auto">
+      <div className="container-earner pt-16 pb-8 px-6 lg:px-8 max-w-[1440px] mx-auto">
         {/* Links Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-y-12 gap-x-8 mb-16">
           {footerSections.map((section) => (

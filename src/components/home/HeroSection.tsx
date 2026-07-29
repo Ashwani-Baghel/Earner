@@ -52,19 +52,19 @@ export function HeroSection() {
       <div className="absolute inset-0 z-0 bg-gradient-to-r from-teal-900/80 to-transparent" />
 
       {/* ── Content ── */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 pt-32 pb-40 flex flex-col justify-center min-h-[600px]">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-16 sm:pt-32 pb-12 sm:pb-24 flex flex-col justify-center min-h-[500px] sm:min-h-[600px]">
         {/* Headline */}
-        <h1 className="text-white font-black tracking-tight leading-[1.1] mb-8 drop-shadow-md max-w-3xl" style={{ fontSize: "clamp(3rem, 5vw, 4.5rem)" }}>
+        <h1 className="text-white font-black tracking-tight leading-[1.1] mb-6 sm:mb-8 drop-shadow-md max-w-3xl" style={{ fontSize: "clamp(2.25rem, 5vw, 4.5rem)" }}>
           Find the perfect <i className="font-serif italic font-light text-teal-400">freelance</i> services for your business
         </h1>
 
         {/* ── Search bar ── */}
         <form
           onSubmit={handleSearch}
-          className="flex w-full max-w-[850px] bg-white rounded-full shadow-2xl p-2 transition-all focus-within:ring-4 focus-within:ring-teal-500/30 h-16 sm:h-20"
+          className="flex w-full max-w-[850px] bg-white rounded-full shadow-2xl p-1.5 sm:p-2 transition-all focus-within:ring-4 focus-within:ring-teal-500/30 h-14 sm:h-20"
         >
-          <div className="flex items-center pl-6 pr-3 text-slate-400">
-            <Search size={24} />
+          <div className="flex items-center pl-4 sm:pl-6 pr-2 sm:pr-3 text-slate-400">
+            <Search size={20} className="sm:w-6 sm:h-6" />
           </div>
           <input
             id="hero-search"
@@ -72,20 +72,20 @@ export function HeroSection() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search for any service..."
-            className="flex-1 px-2 text-lg text-slate-800 bg-transparent outline-none placeholder-slate-400 font-medium"
+            className="flex-1 px-1 sm:px-2 text-base sm:text-lg text-slate-800 bg-transparent outline-none placeholder-slate-400 font-medium min-w-0"
           />
           <button
             type="submit"
             aria-label="Search"
-            className="bg-teal-600 hover:bg-teal-700 text-white font-bold px-8 sm:px-12 rounded-full h-full flex-shrink-0 transition-all shadow-md ml-2"
+            className="bg-teal-600 hover:bg-teal-700 text-white font-bold px-6 sm:px-12 rounded-full h-full flex-shrink-0 transition-all shadow-md ml-1 sm:ml-2 text-sm sm:text-base"
           >
             Search
           </button>
         </form>
 
         {/* ── Quick-search pills ── */}
-        <div className="mt-8 flex flex-wrap items-center gap-3 w-full max-w-[850px]">
-          <span className="text-white/80 font-medium mr-2 drop-shadow-sm">Popular:</span>
+        <div className="mt-6 sm:mt-8 flex flex-wrap items-center gap-2 sm:gap-3 w-full max-w-[850px]">
+          <span className="text-white/80 font-medium mr-1 sm:mr-2 text-sm sm:text-base drop-shadow-sm">Popular:</span>
           {[
             "Website Development",
             "Logo Design",
@@ -95,7 +95,7 @@ export function HeroSection() {
             <button
               key={item}
               onClick={() => handlePill(item)}
-              className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold text-white border border-white/40 bg-white/5 hover:bg-white/20 hover:border-white transition-all backdrop-blur-sm"
+              className="inline-flex items-center px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-semibold text-white border border-white/40 bg-white/5 hover:bg-white/20 hover:border-white transition-all backdrop-blur-sm"
             >
               {item}
             </button>
@@ -104,9 +104,9 @@ export function HeroSection() {
       </div>
 
       {/* ── Trusted-by logos at base ── */}
-      <div className="absolute bottom-0 left-0 w-full z-10 pb-6 lg:pb-8 pt-12 bg-gradient-to-t from-[#00220a] to-transparent">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 flex flex-wrap items-center gap-6">
-          <span className="text-white/80 font-[600] text-[14px] shrink-0 mr-4">
+      <div className="relative w-full z-10 py-6 lg:py-8 bg-gradient-to-t from-[#00220a]/80 to-transparent mt-6 sm:mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 flex flex-wrap items-center gap-4 sm:gap-6">
+          <span className="text-white/80 font-[600] text-[13px] sm:text-[14px] shrink-0 mr-2 sm:mr-4">
             Trusted by:
           </span>
           {TRUSTED_BRANDS.map((brand) => (
