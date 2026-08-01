@@ -25,12 +25,12 @@ export default async function SuperAdminDashboard() {
   });
 
   const STATS = [
-    { label: "Total Users", value: totalUsers, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Total Sellers", value: totalSellers, icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "Total Gigs", value: totalGigs, icon: Briefcase, color: "text-indigo-600", bg: "bg-indigo-50" },
-    { label: "Active Gigs", value: activeGigs, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50" },
-    { label: "Pending Approval", value: pendingGigs, icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
-    { label: "Total Admins", value: totalAdmins, icon: Shield, color: "text-rose-600", bg: "bg-rose-50" },
+    { label: "Total Users", value: totalUsers, icon: Users, color: "text-blue-600", bg: "bg-blue-50", href: "/super-admin/users" },
+    { label: "Total Sellers", value: totalSellers, icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50", href: "/super-admin/users?role=SELLER" },
+    { label: "Total Gigs", value: totalGigs, icon: Briefcase, color: "text-indigo-600", bg: "bg-indigo-50", href: "/super-admin/gigs" },
+    { label: "Active Gigs", value: activeGigs, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50", href: "/super-admin/gigs?status=ACTIVE" },
+    { label: "Pending Approval", value: pendingGigs, icon: Clock, color: "text-amber-600", bg: "bg-amber-50", href: "/super-admin/gigs?status=PENDING" },
+    { label: "Total Admins", value: totalAdmins, icon: Shield, color: "text-rose-600", bg: "bg-rose-50", href: "/super-admin/admins" },
   ];
 
   return (
@@ -61,17 +61,17 @@ export default async function SuperAdminDashboard() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {STATS.map((stat, i) => (
-          <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow group">
+          <Link href={stat.href} key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow group block">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-bold text-slate-500 mb-1">{stat.label}</p>
+                <p className="text-sm font-bold text-slate-500 mb-1 group-hover:text-teal-600 transition-colors">{stat.label}</p>
                 <h3 className="text-3xl font-black text-slate-900 tracking-tight">{stat.value.toLocaleString()}</h3>
               </div>
               <div className={`p-3 rounded-xl ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform`}>
                 <stat.icon size={24} strokeWidth={2.5} />
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 

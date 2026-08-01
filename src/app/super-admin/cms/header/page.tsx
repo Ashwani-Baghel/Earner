@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Save, Loader2, Plus, Trash2 } from "lucide-react";
+import { Save, Loader2, Plus, Trash2, UploadCloud, Image as ImageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
@@ -18,6 +18,45 @@ export default function HeaderCMS() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+
+  const handleImage = async (file: File) => {
+    const validExtensions = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
+    if (!validExtensions.includes(file.type)) {
+      return alert("Invalid file type. Only PNG, JPG, WEBP, and SVG are allowed.");
+    }
+    
+    if (file.size > 2 * 1024 * 1024) {
+      return alert("File is too large. Maximum size is 2MB.");
+    }
+
+    const img = new window.Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = async () => {
+      // Allow reasonably sized logos
+      if (img.width > 1200 || img.height > 1200) {
+        return alert("Image dimensions cannot exceed 1200x1200px.");
+      }
+      
+      setUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const json = await res.json();
+        if (json.url) {
+          setData((prev: any) => ({ ...prev, logoImageUrl: json.url }));
+        } else {
+          alert(json.error || "Failed to upload.");
+        }
+      } catch (e) {
+        alert("Error uploading image");
+      } finally {
+        setUploading(false);
+      }
+    };
+  };
 
   useEffect(() => {
     if (user) fetchData();
@@ -97,14 +136,53 @@ export default function HeaderCMS() {
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">Logo Image URL (Optional)</label>
-            <input 
-              type="text" 
-              value={data.logoImageUrl} 
-              placeholder="https://..."
-              onChange={e => setData({...data, logoImageUrl: e.target.value})}
-              className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-teal-500 outline-none"
-            />
+            <label className="block text-sm font-bold text-slate-700 mb-2">Logo Image (Optional)</label>
+            <div 
+              className={`relative border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center transition-colors ${dragActive ? 'border-teal-500 bg-teal-50' : 'border-slate-300 hover:border-slate-400'}`}
+              onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragActive(false);
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                  handleImage(e.dataTransfer.files[0]);
+                }
+              }}
+            >
+              <input 
+                type="file" 
+                accept=".png,.jpg,.jpeg,.webp,.svg"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleImage(e.target.files[0]);
+                  }
+                }}
+              />
+              {uploading ? (
+                <Loader2 className="animate-spin text-teal-600 mb-2" size={24} />
+              ) : data.logoImageUrl ? (
+                <div className="relative w-full h-24 flex items-center justify-center bg-slate-50 rounded-lg mb-2">
+                  <img src={data.logoImageUrl} alt="Logo Preview" className="max-h-full max-w-full object-contain" />
+                </div>
+              ) : (
+                <UploadCloud className="text-slate-400 mb-2" size={24} />
+              )}
+              <div className="text-sm font-semibold text-teal-600">
+                {uploading ? "Uploading..." : data.logoImageUrl ? "Click or drag to replace" : "Click or drag to upload"}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">PNG, JPG, WEBP, SVG up to 2MB (max 1200x1200px)</p>
+            </div>
+            {data.logoImageUrl && (
+              <div className="mt-2 text-right">
+                <button 
+                  onClick={() => setData({ ...data, logoImageUrl: "" })}
+                  className="text-xs font-bold text-red-500 hover:text-red-600 flex items-center justify-end gap-1 w-full"
+                >
+                  <Trash2 size={12} /> Remove Image
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

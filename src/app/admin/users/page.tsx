@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Search, RefreshCw, Ban, CheckCircle, Trash2, Shield, UserCheck, Plus, X, Loader2 } from "lucide-react";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -18,14 +19,23 @@ interface AdminUser {
 
 const ROLES = ["BUYER", "SELLER", "ADMIN", "SUPER_ADMIN"];
 
-export default function AdminUsersPage() {
+function AdminUsersPageContent() {
   const { user } = useAuth();
   const [users, setUsers]       = useState<AdminUser[]>([]);
   const [total, setTotal]       = useState(0);
   const [loading, setLoading]   = useState(true);
+  const searchParams = useSearchParams();
   const [q, setQ]               = useState("");
+  const [role, setRole]         = useState(searchParams.get("role")?.toUpperCase() || "");
   const [confirm, setConfirm]   = useState<{ action: string; target: AdminUser; extra?: string } | null>(null);
   const [actioning, setActioning] = useState(false);
+
+  useEffect(() => {
+    const urlRole = searchParams.get("role")?.toUpperCase() || "";
+    if (role !== urlRole) {
+      setRole(urlRole);
+    }
+  }, [searchParams]);
 
 
 
@@ -36,6 +46,7 @@ export default function AdminUsersPage() {
       const token = await user.getIdToken();
       const params = new URLSearchParams({ limit: "100" });
       if (q) params.set("q", q);
+      if (role) params.set("role", role);
       const res = await fetch(`/api/admin/users?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -47,7 +58,7 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, q]);
+  }, [user, q, role]);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
@@ -94,15 +105,28 @@ export default function AdminUsersPage() {
             </button>
           </div>
         </div>
-        <div className="mt-4 relative max-w-sm">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search name or email…"
-            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
-          />
-        </div>
+        <div className="flex flex-col sm:flex-row gap-3 mt-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                placeholder="Search users..."
+                className="w-full pl-10 pr-4 py-2 bg-slate-100 border-transparent rounded-xl focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-all"
+                value={q}
+                onChange={e => setQ(e.target.value)}
+              />
+            </div>
+            <select
+              value={role}
+              onChange={e => setRole(e.target.value)}
+              className="bg-slate-100 border-transparent rounded-xl px-4 py-2 focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-all"
+            >
+              <option value="">All Roles</option>
+              {ROLES.map(r => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
+          </div>
       </div>
 
       <div className="p-6">
@@ -219,5 +243,13 @@ export default function AdminUsersPage() {
         onCancel={() => setConfirm(null)}
       />
     </div>
+  );
+}
+
+export default function AdminUsersPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AdminUsersPageContent />
+    </Suspense>
   );
 }

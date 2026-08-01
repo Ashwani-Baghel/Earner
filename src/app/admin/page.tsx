@@ -36,6 +36,7 @@ export default async function AdminDashboard() {
     {
       label: "Total Users",
       value: totalUsers,
+      href: "/admin/users",
       icon: Users,
       color: "bg-blue-50 text-blue-600",
       change: "+12% this month",
@@ -44,6 +45,7 @@ export default async function AdminDashboard() {
     {
       label: "Total Gigs",
       value: totalGigs,
+      href: "/admin/gigs",
       icon: Briefcase,
       color: "bg-teal-50 text-teal-600",
       change: `${activeGigs} active`,
@@ -52,6 +54,7 @@ export default async function AdminDashboard() {
     {
       label: "Pending Review",
       value: pendingGigs,
+      href: "/admin/gigs?status=PENDING",
       icon: Clock,
       color: "bg-amber-50 text-amber-600",
       change: "Needs attention",
@@ -60,6 +63,7 @@ export default async function AdminDashboard() {
     {
       label: "Total Orders",
       value: totalOrders,
+      href: "/admin/orders",
       icon: TrendingUp,
       color: "bg-purple-50 text-purple-600",
       change: "All time",
@@ -68,6 +72,7 @@ export default async function AdminDashboard() {
     {
       label: "Active Sellers",
       value: totalSellers,
+      href: "/admin/users?role=SELLER",
       icon: ShieldCheck,
       color: "bg-green-50 text-green-600",
       change: `of ${totalUsers} users`,
@@ -76,6 +81,7 @@ export default async function AdminDashboard() {
     {
       label: "Approval Rate",
       value: totalGigs > 0 ? `${Math.round((activeGigs / totalGigs) * 100)}%` : "—",
+      href: "/admin/gigs",
       icon: BarChart3,
       color: "bg-indigo-50 text-indigo-600",
       change: "Gig approval rate",
@@ -97,19 +103,19 @@ export default async function AdminDashboard() {
 
         {/* ── Metric Cards ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {metrics.map(({ label, value, icon: Icon, color, change, positive }) => (
-            <div key={label} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+          {metrics.map(({ label, value, href, icon: Icon, color, change, positive }) => (
+            <Link href={href} key={label} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow group block">
               <div className="flex items-start justify-between mb-4">
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${color}`}>
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform ${color}`}>
                   <Icon size={20} />
                 </div>
               </div>
               <p className="text-3xl font-bold text-slate-900 mb-1">{value}</p>
-              <p className="text-sm font-semibold text-slate-500">{label}</p>
+              <p className="text-sm font-semibold text-slate-500 group-hover:text-teal-600 transition-colors">{label}</p>
               <p className={`text-xs mt-2 font-medium ${positive ? "text-teal-600" : "text-amber-600"}`}>
                 {change}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
 

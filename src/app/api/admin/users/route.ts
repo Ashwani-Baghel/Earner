@@ -12,18 +12,23 @@ export async function GET(req: NextRequest) {
     await requireAdminDb(req);
     const { searchParams } = new URL(req.url);
     const q    = searchParams.get("q") ?? "";
+    const role = searchParams.get("role") ?? "";
     const take = Math.min(Number(searchParams.get("limit") ?? 50), 200);
     const skip = Number(searchParams.get("offset") ?? 0);
 
+    const where: any = {};
+    if (q) {
+      where.OR = [
+        { name:  { contains: q, mode: "insensitive" } },
+        { email: { contains: q, mode: "insensitive" } },
+      ];
+    }
+    if (role && ["BUYER", "SELLER", "ADMIN", "SUPER_ADMIN"].includes(role)) {
+      where.role = { equals: role as any };
+    }
+
     const users = await prisma.user.findMany({
-      where: q
-        ? {
-            OR: [
-              { name:  { contains: q, mode: "insensitive" } },
-              { email: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : undefined,
+      where,
       select: {
         id: true, name: true, email: true, role: true,
         isBanned: true, isVerified: true, createdAt: true,
@@ -46,10 +51,7 @@ export async function GET(req: NextRequest) {
       skip,
     });
 
-    const total = await prisma.user.count({ where: q ? { OR: [
-      { name: { contains: q, mode: "insensitive" } },
-      { email: { contains: q, mode: "insensitive" } },
-    ]} : undefined });
+    const total = await prisma.user.count({ where });
 
     return NextResponse.json({ users, total });
   } catch (e) {

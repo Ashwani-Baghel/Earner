@@ -15,6 +15,12 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 const NAV = [
   { href: "/super-admin",            label: "Dashboard",       icon: LayoutDashboard, requiredPermission: null },
+  { href: "/super-admin/gigs",       label: "Gig Moderation",  icon: Briefcase, requiredPermission: null },
+  { href: "/super-admin/users",      label: "Users",           icon: Users, requiredPermission: null },
+  { href: "/super-admin/orders",     label: "Orders",          icon: ShoppingBag, requiredPermission: null },
+  { href: "/super-admin/payments",   label: "Payments",        icon: CreditCard, requiredPermission: null },
+  { href: "/super-admin/reports",    label: "Reports",         icon: Flag, requiredPermission: null },
+  { href: "/super-admin/analytics",  label: "Analytics",       icon: BarChart3, requiredPermission: null },
   { href: "/super-admin/admins",     label: "Admin Management",icon: Shield, requiredPermission: null },
   { href: "/super-admin/roles",      label: "Roles & Perms",   icon: Key, requiredPermission: null },
   { href: "/super-admin/audit-logs", label: "Audit Logs",      icon: ActivitySquare, requiredPermission: null },
@@ -128,7 +134,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
           {NAV.map(({ href, label, icon: Icon, requiredPermission }) => {
             if (requiredPermission && !hasPermission(requiredPermission)) return null;
             
-            const exact   = href === "/admin";
+            const exact   = href === "/super-admin";
             const isActive = exact ? pathname === href : pathname.startsWith(href);
             return (
               <Link

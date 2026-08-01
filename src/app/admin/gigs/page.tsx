@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Search, Filter, CheckCircle, XCircle, Ban, Trash2, RefreshCw, Eye } from "lucide-react";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -16,15 +17,23 @@ interface Gig {
 
 const STATUSES = ["", "PENDING", "ACTIVE", "REJECTED", "BANNED", "PAUSED", "DRAFT"];
 
-export default function AdminGigsPage() {
+function AdminGigsPageContent() {
   const { user } = useAuth();
   const [gigs, setGigs]         = useState<Gig[]>([]);
   const [total, setTotal]       = useState(0);
   const [loading, setLoading]   = useState(true);
+  const searchParams = useSearchParams();
   const [q, setQ]               = useState("");
-  const [status, setStatus]     = useState("");
+  const [status, setStatus]     = useState(searchParams.get("status")?.toUpperCase() || "");
   const [confirm, setConfirm]   = useState<{ action: string; gig: Gig } | null>(null);
   const [actioning, setActioning] = useState(false);
+
+  useEffect(() => {
+    const urlStatus = searchParams.get("status")?.toUpperCase() || "";
+    if (status !== urlStatus) {
+      setStatus(urlStatus);
+    }
+  }, [searchParams]);
 
   const fetchGigs = useCallback(async () => {
     if (!user) return;
@@ -203,5 +212,13 @@ export default function AdminGigsPage() {
         onCancel={() => setConfirm(null)}
       />
     </div>
+  );
+}
+
+export default function AdminGigsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AdminGigsPageContent />
+    </Suspense>
   );
 }
