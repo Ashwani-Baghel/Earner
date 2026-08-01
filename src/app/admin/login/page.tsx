@@ -40,7 +40,9 @@ export default function AdminLogin() {
       const userData = await res.json();
       
       // 3. Verify Admin Role
-      if (userData.role === "ADMIN" || userData.role === "SUPER_ADMIN") {
+      if (userData.role === "SUPER_ADMIN") {
+        router.push("/super-admin");
+      } else if (userData.role === "ADMIN") {
         router.push("/admin");
       } else {
         await signOut();

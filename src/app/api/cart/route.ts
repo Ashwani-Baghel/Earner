@@ -40,11 +40,11 @@ export async function GET(req: NextRequest) {
         } as GigPackage;
       });
 
-      const gig: Gig = {
+      const gig: any = {
         id: item.gig.id,
         title: item.gig.title,
         description: item.gig.description,
-        images: item.gig.images,
+        images: [],
         categoryId: item.gig.categoryId,
         subcategoryId: item.gig.subcategoryId,
         sellerId: item.gig.sellerId,

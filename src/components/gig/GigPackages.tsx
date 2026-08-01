@@ -21,7 +21,7 @@ export function GigPackages({ gig }: GigPackagesProps) {
   const { favoriteIds, toggleFavorite } = useFavorites();
   const { user } = useAuth();
   const isFavorite = favoriteIds.includes(gig.id);
-  const isOwnGig = user?.uid === gig.seller.uid;
+  const isOwnGig = user?.uid === (gig.seller?.uid || (gig as any).sellerId);
 
   const tiers: PackageTier[] = ["basic", "standard", "premium"];
   const pkg = gig?.packages?.[activeTier];

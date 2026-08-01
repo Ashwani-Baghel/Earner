@@ -78,6 +78,7 @@ model User {
   conversations ConversationParticipant[]
   reportsGiven  Report[]       @relation("ReportsByUser")
   cartItems     CartItem[]
+  adminProfile  AdminProfile?
 }
 
 // ─── Seller Profile ───────────────────────────────────────────────────────────
@@ -113,6 +114,12 @@ model Category {
   slug        String   @unique
   description String?
   icon        String?
+  image       String?
+  featured    Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  status      String   @default("ACTIVE") // ACTIVE | HIDDEN
+  seoTitle    String?
+  seoDesc     String?
   subcategories SubCategory[]
   gigs        Gig[]
   createdAt   DateTime @default(now())
@@ -126,6 +133,13 @@ model SubCategory {
   name        String
   slug        String   @unique
   description String?
+  groupName   String?
+  image       String?
+  featured    Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  status      String   @default("ACTIVE")
+  seoTitle    String?
+  seoDesc     String?
   gigs        Gig[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -327,4 +341,82 @@ model CartItem {
   createdAt DateTime @default(now())
 
   @@unique([userId, gigId, tier]) // prevent duplicates
+}
+
+// ─── Super Admin & RBAC ───────────────────────────────────────────────────────
+
+model AdminProfile {
+  id          String            @id @default(cuid())
+  userId      String            @unique
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId      String?
+  role        AdminRole?        @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  isActive    Boolean           @default(true)
+  lastLogin   DateTime?
+  permissions AdminPermission[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model AdminRole {
+  id          String           @id @default(cuid())
+  name        String           @unique // e.g., "Moderator", "Support"
+  description String?
+  permissions RolePermission[]
+  admins      AdminProfile[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model Permission {
+  id          String            @id @default(cuid())
+  name        String            @unique // e.g., "users.view", "orders.manage"
+  description String?
+  admins      AdminPermission[]
+  roles       RolePermission[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model RolePermission {
+  roleId       String
+  role         AdminRole  @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@id([roleId, permissionId])
+}
+
+model AdminPermission {
+  adminId       String
+  admin         AdminProfile @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  permissionId  String
+  permission    Permission   @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  createdAt     DateTime     @default(now())
+
+  @@id([adminId, permissionId])
+}
+
+// ─── Audit Logs ───────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  action    String   // e.g., "DELETE_GIG"
+  module    String   // e.g., "GIGS"
+  oldData   Json?
+  newData   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+// ─── Dynamic CMS Configurations ───────────────────────────────────────────────
+
+model CmsConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique // "HEADER", "FOOTER", "HERO", "HOMEPAGE_SECTIONS", "SEO"
+  data      Json
+  updatedAt DateTime @updatedAt
 }

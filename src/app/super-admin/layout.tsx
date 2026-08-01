@@ -14,13 +14,10 @@ import { Avatar } from "@/components/ui/Avatar";
 import { usePermissions } from "@/hooks/usePermissions";
 
 const NAV = [
-  { href: "/admin",            label: "Dashboard",     icon: LayoutDashboard, requiredPermission: null },
-  { href: "/admin/gigs",       label: "Gig Moderation", icon: Briefcase, requiredPermission: "gigs.view" },
-  { href: "/admin/users",      label: "Users",          icon: Users, requiredPermission: "users.view" },
-  { href: "/admin/orders",     label: "Orders",         icon: ShoppingBag, requiredPermission: "orders.view" },
-  { href: "/admin/payments",   label: "Payments",       icon: CreditCard, requiredPermission: "payments.view" },
-  { href: "/admin/reports",    label: "Reports",        icon: Flag, requiredPermission: null },
-  { href: "/admin/analytics",  label: "Analytics",      icon: BarChart3, requiredPermission: "analytics.view" },
+  { href: "/super-admin",            label: "Dashboard",       icon: LayoutDashboard, requiredPermission: null },
+  { href: "/super-admin/admins",     label: "Admin Management",icon: Shield, requiredPermission: null },
+  { href: "/super-admin/roles",      label: "Roles & Perms",   icon: Key, requiredPermission: null },
+  { href: "/super-admin/audit-logs", label: "Audit Logs",      icon: ActivitySquare, requiredPermission: null },
 ];
 
 const SETTINGS_CATEGORIES = [
@@ -36,7 +33,7 @@ const SETTINGS_CATEGORIES = [
   { id: "system", label: "System" }
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, signOut } = useAuth();
   const router   = useRouter();
   const pathname = usePathname();
@@ -51,10 +48,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // Auto-expand settings dropdown if we are inside settings
   useEffect(() => {
-    if (pathname.startsWith("/admin/settings")) {
+    if (pathname.startsWith("/super-admin/settings")) {
       setSettingsOpen(true);
     }
-    if (pathname.startsWith("/admin/cms")) {
+    if (pathname.startsWith("/super-admin/cms")) {
       setContentOpen(true);
     }
   }, [pathname]);
@@ -64,10 +61,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (loading) return;
     if (!user) { router.push("/admin/login"); return; }
     const r = user.role ?? "";
-    if (r === "ADMIN" || r === "SUPER_ADMIN") {
+    if (r === "SUPER_ADMIN") {
       setIsAdmin(true);
     } else {
-      router.push("/admin/login");
+      router.push("/admin");
     }
   }, [user, loading, router, isLoginPage]);
 
@@ -105,7 +102,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Brand */}
         <div className="h-[69px] flex items-center justify-between px-6 border-b border-slate-200">
-          <Link href="/admin" className="flex items-center gap-3">
+          <Link href="/super-admin" className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-teal-600 flex items-center justify-center flex-shrink-0">
               <Shield size={16} className="text-white" />
             </div>
@@ -154,22 +151,86 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
           
           {/* Website Content (CMS) Dropdown */}
-          {user?.role === "SUPER_ADMIN" && (
-            <div className="pt-4 border-t border-slate-200 mt-4">
-              <Link 
-                href="/super-admin"
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 group"
+          {hasAnyPermission(["content.manage", "categories.manage"]) && (
+            <div className="pt-2 mt-2 border-t border-slate-100">
+              <button
+                onClick={() => setContentOpen(!contentOpen)}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all group ${
+                  pathname.startsWith("/super-admin/cms")
+                    ? "text-teal-700"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                }`}
               >
-                <div className="flex items-center gap-3">
-                  <Shield size={20} className="transition-transform group-hover:scale-110 text-teal-600" />
-                  <span className="font-semibold text-sm">Switch to Super Admin</span>
-                </div>
-                <ChevronRight size={16} className="text-slate-400 group-hover:text-teal-600 transition-colors" />
-              </Link>
-            </div>
+              <Layout
+                size={17}
+                className={pathname.startsWith("/super-admin/cms") ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"}
+              />
+              <span className="flex-1 text-left">Website Content</span>
+              <ChevronRight size={16} className={`text-slate-400 transition-transform ${contentOpen ? 'rotate-90' : ''}`} />
+            </button>
+            {contentOpen && (
+              <div className="mt-1 ml-4 pl-4 border-l-2 border-slate-100 flex flex-col gap-1">
+                <Link href="/super-admin/cms/header" className={`px-3 py-2 text-sm rounded-xl transition-colors ${pathname === '/super-admin/cms/header' ? 'bg-teal-50 text-teal-700 font-bold' : 'text-slate-600 hover:bg-slate-100'}`}>Header</Link>
+                <Link href="/super-admin/cms/hero" className={`px-3 py-2 text-sm rounded-xl transition-colors ${pathname === '/super-admin/cms/hero' ? 'bg-teal-50 text-teal-700 font-bold' : 'text-slate-600 hover:bg-slate-100'}`}>Hero Section</Link>
+                <Link href="/super-admin/cms/categories" className={`px-3 py-2 text-sm rounded-xl transition-colors ${pathname === '/super-admin/cms/categories' ? 'bg-teal-50 text-teal-700 font-bold' : 'text-slate-600 hover:bg-slate-100'}`}>Categories</Link>
+                <Link href="/super-admin/cms/footer" className={`px-3 py-2 text-sm rounded-xl transition-colors ${pathname === '/super-admin/cms/footer' ? 'bg-teal-50 text-teal-700 font-bold' : 'text-slate-600 hover:bg-slate-100'}`}>Footer</Link>
+              </div>
+            )}
+          </div>
           )}
 
+          <div className="pt-4 border-t border-slate-200 mt-4">
+            <Link 
+              href="/admin"
+              className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 group"
+            >
+              <div className="flex items-center gap-3">
+                <ArrowLeft size={20} className="transition-transform group-hover:-translate-x-1" />
+                <span className="font-semibold text-sm">Switch to Admin</span>
+              </div>
+            </Link>
+          </div>
 
+          {/* Settings Dropdown */}
+          <div className="pt-2 mt-2 border-t border-slate-100">
+            <button
+              onClick={() => setSettingsOpen(!settingsOpen)}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all group ${
+                pathname.startsWith("/super-admin/settings")
+                  ? "text-teal-700"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+              }`}
+            >
+              <Settings
+                size={17}
+                className={pathname.startsWith("/super-admin/settings") ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"}
+              />
+              <span className="flex-1 text-left">Settings</span>
+              <ChevronRight size={16} className={`text-slate-400 transition-transform ${settingsOpen ? 'rotate-90' : ''}`} />
+            </button>
+            
+            {settingsOpen && (
+              <div className="mt-1 ml-4 pl-4 border-l-2 border-slate-100 flex flex-col gap-1">
+                {SETTINGS_CATEGORIES.map(cat => {
+                  const isActive = pathname === `/super-admin/settings/${cat.id}`;
+                  return (
+                    <Link 
+                      key={cat.id}
+                      href={`/super-admin/settings/${cat.id}`}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isActive
+                          ? "bg-teal-50 text-teal-700"
+                          : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                      }`}
+                    >
+                      {cat.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* Footer */}
@@ -195,11 +256,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {userMenuOpen && (
             <div className="absolute bottom-full left-3 w-64 mb-2 bg-white border border-slate-200 shadow-xl rounded-xl py-2 z-50">
               <div className="px-4 py-2 border-b border-slate-100">
-                <p className="text-xs font-bold text-slate-800">Admin Options</p>
+                <h1 className="text-xl font-black bg-gradient-to-r from-teal-600 to-emerald-500 bg-clip-text text-transparent">
+                  Super Admin
+                </h1>
               </div>
               <div className="py-1">
                 <Link
-                  href="/admin/settings"
+                  href="/super-admin/settings"
                   onClick={() => setUserMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors"
                 >

@@ -18,8 +18,8 @@ import { useNotification } from "../../context/NotificationContext";
 import { useChat } from "../../context/ChatContext";
 import { useCart } from "../../context/CartContext";
 import { useFavorites } from "../../context/FavoritesContext";
+import { useCms } from "../../context/CmsContext";
 import { CategorySlider } from "./CategorySlider";
-import { CATEGORIES } from "@/lib/mock-data/categories";
 
 function LoginQueryListener({ setLoginOpen, user }: { setLoginOpen: (v: boolean) => void, user: any }) {
   const searchParams = useSearchParams();
@@ -44,6 +44,7 @@ function useBodyScrollLock(isLocked: boolean) {
 }
 
 export function Navbar() {
+  const { header, categories } = useCms();
   const router = useRouter();
   const { user, loading, signOut } = useAuth();
   const { unreadCount } = useNotification();
@@ -62,6 +63,13 @@ export function Navbar() {
   const [selectedMegaGroupTitle, setSelectedMegaGroupTitle] = useState<string | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useBodyScrollLock(mobileMenuOpen);
 
@@ -134,10 +142,17 @@ export function Navbar() {
 
             {/* Logo */}
             <div className="flex items-center shrink-0">
-              <Link href={logoHref}>
-                <span className="text-2xl lg:text-[28px] font-black tracking-tight text-slate-900">
-                  Earner<span className="text-teal-600">.</span>
-                </span>
+              <Link href={logoHref} className="flex items-center gap-2 relative z-[60]">
+                {header?.logoImageUrl ? (
+                  <img src={header.logoImageUrl} alt="Logo" className="h-8" />
+                ) : (
+                  <span className={`font-black tracking-tighter text-3xl transition-colors duration-200 ${
+                    isScrolled ? "text-slate-900" : "text-slate-900"
+                  }`}>
+                    {header?.logoText || "Earner"}
+                    <span className="text-teal-600">.</span>
+                  </span>
+                )}
               </Link>
             </div>
 
@@ -207,6 +222,17 @@ export function Navbar() {
             {/* Right: icons + auth actions */}
             <div className="flex items-center shrink-0">
               <div className="hidden lg:flex items-center gap-5 text-[13px] font-semibold text-slate-600">
+
+                {/* Header Links */}
+                {header?.links?.map((link: any, i: number) => (
+                  <Link 
+                    key={i}
+                    href={link.url}
+                    className="text-[15px] font-semibold transition-colors text-slate-600 hover:text-teal-600"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
 
                 {/* Country/Currency Selector (buyer only) */}
                 {!isSellerView && (
@@ -503,7 +529,7 @@ export function Navbar() {
             {!isSellerView && !isAdmin && (
               <div className="pt-4 mt-4 border-t border-slate-100">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Categories</p>
-                {CATEGORIES.map(cat => (
+                {(categories || []).map((cat: any) => (
                   <div key={cat.id} className="border-b border-slate-50">
                     <button
                       onClick={() => {
@@ -518,7 +544,7 @@ export function Navbar() {
                     {selectedMobileCategory === cat.id && (
                       <div className="pl-6 pb-2 space-y-1 border-l-2 border-slate-100 ml-2">
                         {cat.megaGroups && cat.megaGroups.length > 0 ? (
-                          cat.megaGroups.map(group => (
+                          cat.megaGroups.map((group: any) => (
                             <div key={group.title} className="py-1">
                               <button
                                 onClick={() => setSelectedMegaGroupTitle(selectedMegaGroupTitle === group.title ? null : group.title)}
@@ -529,7 +555,7 @@ export function Navbar() {
                               </button>
                               {selectedMegaGroupTitle === group.title && (
                                 <div className="pl-4 pt-1 pb-2 space-y-1 border-l-2 border-slate-100 ml-1">
-                                  {group.links.map(link => (
+                                  {group.links.map((link: any) => (
                                     <Link
                                       key={link.slug}
                                       href={`/search?category=${cat.name}&subcategory=${link.name}`}
@@ -545,7 +571,7 @@ export function Navbar() {
                             </div>
                           ))
                         ) : (
-                          cat.subcategories.map(sub => (
+                          cat.subcategories?.map((sub: any) => (
                             <Link
                               key={sub.id}
                               href={`/search?category=${cat.name}&subcategory=${sub.name}`}

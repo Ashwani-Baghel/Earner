@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { SearchFilters } from "../../lib/types";
-import { CATEGORIES } from "../../lib/mock-data/categories";
+import { useCms } from "../../context/CmsContext";
+import { useSearchParams } from "next/navigation";
 
 interface SearchFiltersProps {
   filters: Partial<SearchFilters>;
@@ -10,6 +11,7 @@ interface SearchFiltersProps {
 }
 
 export function SearchFilters({ filters, onChange }: SearchFiltersProps) {
+  const { categories } = useCms();
   const [budgetOpen, setBudgetOpen] = useState(true);
   const [deliveryOpen, setDeliveryOpen] = useState(true);
   const [levelOpen, setLevelOpen] = useState(true);
@@ -35,7 +37,7 @@ export function SearchFilters({ filters, onChange }: SearchFiltersProps) {
         {/* Category */}
         {filterSection("Category", true, () => {}, (
           <div className="space-y-1.5">
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat: any) => (
               <label key={cat.id} className="flex items-center gap-2 cursor-pointer group">
                 <input
                   type="radio"

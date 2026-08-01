@@ -9,7 +9,14 @@ interface Props {
 }
 
 export function CategoryMegaMenu({ category, onClose }: Props) {
-  if (!category.megaGroups || category.megaGroups.length === 0) return null;
+  if (!category.subcategories || category.subcategories.length === 0) return null;
+
+  const groupedSubs: Record<string, any[]> = {};
+  category.subcategories.forEach((sub: any) => {
+    const group = sub.groupName || "Other";
+    if (!groupedSubs[group]) groupedSubs[group] = [];
+    groupedSubs[group].push(sub);
+  });
 
   return (
     <div className="absolute left-0 right-0 top-full z-50 animate-fade-in">
@@ -36,36 +43,28 @@ export function CategoryMegaMenu({ category, onClose }: Props) {
 
           {/* Mega columns grid */}
           <div
-            className="grid gap-8"
+            className="grid gap-x-8 gap-y-8"
             style={{
-              gridTemplateColumns: `repeat(${Math.min(category.megaGroups.length, 4)}, 1fr)`,
+              gridTemplateColumns: `repeat(${Math.max(1, Math.min(Object.keys(groupedSubs).length, 4))}, minmax(0, 1fr))`,
             }}
           >
-            {category.megaGroups.map((group) => (
-              <div key={group.title}>
-                <h4 className="text-[13px] font-bold text-[#404145] mb-3 uppercase tracking-wide">
-                  {group.title}
-                </h4>
-                <ul className="space-y-2">
-                  {group.links.map((link) => (
-                    <li key={link.name}>
-                      <Link
-                        href={`/categories/${category.slug}?sub=${link.slug}`}
-                        onClick={onClose}
-                        className="flex items-center gap-2 text-[14px] text-[#74767e] hover:text-[#1dbf73] transition-colors group"
-                      >
-                        <span className="group-hover:translate-x-0.5 transition-transform">
-                          {link.name}
-                        </span>
-                        {link.isNew && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#e6f7ef] text-[#1dbf73] border border-[#1dbf73] uppercase tracking-wide leading-none">
-                            NEW
-                          </span>
-                        )}
-                      </Link>
-                    </li>
+            {Object.entries(groupedSubs).map(([group, subs]) => (
+              <div key={group} className="flex flex-col gap-3">
+                {group !== "Other" && (
+                  <h4 className="font-bold text-[#404145] text-[15px]">{group}</h4>
+                )}
+                <div className="flex flex-col gap-2">
+                  {subs.map((sub: any) => (
+                    <Link
+                      key={sub.slug}
+                      href={`/categories/${category.slug}?sub=${sub.slug}`}
+                      onClick={onClose}
+                      className="text-[14px] text-[#74767e] hover:text-[#1dbf73] transition-colors"
+                    >
+                      {sub.name}
+                    </Link>
                   ))}
-                </ul>
+                </div>
               </div>
             ))}
           </div>

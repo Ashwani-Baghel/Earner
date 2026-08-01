@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
 
     // Verify Admin
     const user = await prisma.user.findUnique({
-      where: { firebaseUid: decoded.uid },
+      where: { id: decoded.uid },
       select: { role: true },
     });
 
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
       total,
       totalRevenue,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Admin Payments Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

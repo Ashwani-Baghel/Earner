@@ -9,8 +9,10 @@ import {
   QUICK_SEARCHES,
   TRUSTED_BRANDS,
 } from "@/lib/constants";
+import { useCms } from "../../context/CmsContext";
 
 export function HeroSection() {
+  const { hero } = useCms();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
@@ -42,8 +44,7 @@ export function HeroSection() {
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage:
-            "url('https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&q=80')",
+          backgroundImage: `url('${hero?.backgroundImageUrl || "https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&q=80"}')`,
         }}
       />
 
@@ -55,7 +56,7 @@ export function HeroSection() {
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-16 sm:pt-32 pb-12 sm:pb-24 flex flex-col justify-center min-h-[500px] sm:min-h-[600px]">
         {/* Headline */}
         <h1 className="text-white font-black tracking-tight leading-[1.1] mb-6 sm:mb-8 drop-shadow-md max-w-3xl" style={{ fontSize: "clamp(2.25rem, 5vw, 4.5rem)" }}>
-          Find the perfect <i className="font-serif italic font-light text-teal-400">freelance</i> services for your business
+          {hero?.headline || "Find the perfect freelance services for your business"}
         </h1>
 
         {/* ── Search bar ── */}
@@ -71,8 +72,10 @@ export function HeroSection() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search for any service..."
+            placeholder={placeholderVisible ? (hero?.searchPlaceholder || SEARCH_PLACEHOLDERS[placeholderIdx]) : ""}
             className="flex-1 px-1 sm:px-2 text-base sm:text-lg text-slate-800 bg-transparent outline-none placeholder-slate-400 font-medium min-w-0"
+            onFocus={() => setPlaceholderVisible(false)}
+            onBlur={() => setPlaceholderVisible(true)}
           />
           <button
             type="submit"

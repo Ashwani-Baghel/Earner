@@ -9,7 +9,8 @@ import { CartProvider } from "@/context/CartContext";
 import { NotificationProvider } from "@/context/NotificationContext";
 import { FavoritesProvider } from "@/context/FavoritesContext";
 import { ChatProvider } from "@/context/ChatContext";
-
+import { CmsProvider } from "@/context/CmsContext";
+import { getCmsConfig, getCmsCategories } from "@/lib/cms-server";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
@@ -24,21 +25,28 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export const dynamic = "force-dynamic";
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const { header, hero, footer } = await getCmsConfig();
+  const categories = await getCmsCategories();
+  
   return (
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen flex flex-col bg-white overflow-x-hidden w-full max-w-[100vw]">
-        <AuthProvider>
-          <NotificationProvider>
-            <FavoritesProvider>
-              <CartProvider>
-                <ChatProvider>
-                  <ConditionalLayout>{children}</ConditionalLayout>
-                </ChatProvider>
-              </CartProvider>
-            </FavoritesProvider>
-          </NotificationProvider>
-        </AuthProvider>
+        <CmsProvider initialData={{ header, hero, footer, categories }}>
+          <AuthProvider>
+            <NotificationProvider>
+              <FavoritesProvider>
+                <CartProvider>
+                  <ChatProvider>
+                    <ConditionalLayout>{children}</ConditionalLayout>
+                  </ChatProvider>
+                </CartProvider>
+              </FavoritesProvider>
+            </NotificationProvider>
+          </AuthProvider>
+        </CmsProvider>
       </body>
     </html>
   );

@@ -21,8 +21,7 @@ export async function POST(req: NextRequest) {
     if (!requester || requester.role !== "SUPER_ADMIN") {
       return NextResponse.json({ error: "Forbidden: Super Admin access required" }, { status: 403 });
     }
-
-    const { email, password } = await req.json();
+    const { email, password, name, permissionIds, roleId } = await req.json();
 
     if (!email || !password || password.length < 6) {
       return NextResponse.json(
@@ -36,30 +35,49 @@ export async function POST(req: NextRequest) {
       email,
       password,
       emailVerified: true,
-      displayName: "Admin",
+      displayName: name || "Admin",
     });
 
     // 2. Add custom claims for Firebase rules if needed (optional)
     await adminAuth.setCustomUserClaims(userRecord.uid, { role: "ADMIN" });
 
-    // 3. Create user in Prisma DB
-    const newAdmin = await prisma.user.create({
-      data: {
-        id: userRecord.uid,
-        email: userRecord.email!,
-        name: "Admin",
-        role: "ADMIN",
-        isVerified: true,
-      },
-    });
+    let newAdmin;
+    try {
+      newAdmin = await prisma.user.create({
+        data: {
+          id: userRecord.uid,
+          email: userRecord.email!,
+          name: name || "Admin",
+          role: "ADMIN",
+          isVerified: true,
+          adminProfile: {
+            create: {
+              isActive: true,
+              ...(roleId ? { role: { connect: { id: roleId } } } : {}),
+              permissions: {
+                create: (permissionIds || []).map((pId: string) => ({
+                  permission: { connect: { id: pId } }
+                }))
+              }
+            }
+          }
+        },
+        include: { adminProfile: true }
+      });
+    } catch (prismaError: unknown) {
+      // If Prisma fails, clean up the Firebase user
+      await adminAuth.deleteUser(userRecord.uid);
+      console.error("Prisma failed, cleaned up Firebase user:", prismaError);
+      return NextResponse.json({ error: (prismaError as any).message || "Database Error" }, { status: 400 });
+    }
 
     return NextResponse.json({ success: true, user: newAdmin }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Create Admin Error:", error);
     // Handle Firebase duplicate email error specifically
-    if (error.code === "auth/email-already-exists") {
+    if ((error as any).code === "auth/email-already-exists") {
       return NextResponse.json({ error: "Email already in use" }, { status: 400 });
     }
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: (error as any).message || "Internal Server Error" }, { status: 500 });
   }
 }

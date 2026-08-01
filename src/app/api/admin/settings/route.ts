@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
 
     // Verify Admin
     const user = await prisma.user.findUnique({
-      where: { firebaseUid: decoded.uid },
+      where: { id: decoded.uid },
       select: { role: true },
     });
 
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({ settings });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Get Settings Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
@@ -39,7 +39,7 @@ export async function PATCH(req: NextRequest) {
 
     // Verify Super Admin (or Admin if allowed, let's allow Admin for basic settings)
     const user = await prisma.user.findUnique({
-      where: { firebaseUid: decoded.uid },
+      where: { id: decoded.uid },
       select: { role: true },
     });
 
@@ -65,7 +65,7 @@ export async function PATCH(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, settings });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Update Settings Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

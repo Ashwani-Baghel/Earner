@@ -4,11 +4,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { GigCard } from "@/components/gig/GigCard";
-import { CATEGORIES } from "@/lib/mock-data/categories";
+import { useCms } from "@/context/CmsContext";
 import { ChevronRight, PlayCircle, Sparkles, Users, Search, FileText } from "lucide-react";
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
+  const { categories } = useCms();
   const router = useRouter();
   const [brief, setBrief] = useState("");
 
@@ -236,7 +237,7 @@ export default function DashboardPage() {
         <div className="container-earner py-12">
           <h2 className="text-xl font-bold text-[#404145] mb-6">Browse by category</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {CATEGORIES.map(cat => (
+            {categories.map((cat: any) => (
               <Link
                 key={cat.id}
                 href={`/categories/${cat.slug}`}

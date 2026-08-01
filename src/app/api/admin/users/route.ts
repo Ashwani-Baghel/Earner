@@ -28,6 +28,18 @@ export async function GET(req: NextRequest) {
         id: true, name: true, email: true, role: true,
         isBanned: true, isVerified: true, createdAt: true,
         _count: { select: { gigsAsSeller: true, ordersAsBuyer: true } },
+        adminProfile: {
+          select: {
+            roleId: true,
+            permissions: {
+              select: {
+                permission: {
+                  select: { id: true, name: true, description: true }
+                }
+              }
+            }
+          }
+        }
       },
       orderBy: { createdAt: "desc" },
       take,
@@ -97,7 +109,17 @@ export async function DELETE(req: NextRequest) {
     const { userId } = await req.json() as { userId: string };
     if (!userId) throw new ApiError(400, "userId is required.");
 
+    // Delete from Postgres
     await prisma.user.delete({ where: { id: userId } });
+    
+    // Delete from Firebase Auth
+    try {
+      const { getAdminAuth } = require("@/lib/firebaseAdmin");
+      await getAdminAuth().deleteUser(userId);
+    } catch (firebaseErr) {
+      console.error("Failed to delete user from Firebase Auth:", firebaseErr);
+    }
+    
     return NextResponse.json({ success: true });
   } catch (e) {
     return handleApiError(e);

@@ -3,10 +3,11 @@
 import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { CATEGORIES } from "@/lib/mock-data/categories";
+import { useCms } from "../../context/CmsContext";
 import { CategoryMegaMenu } from "./CategoryMegaMenu";
 
 export function CategorySlider() {
+  const { categories } = useCms();
   const containerRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
@@ -70,7 +71,7 @@ export function CategorySlider() {
             Trending <span>🔥</span>
           </Link>
         </div>
-        {CATEGORIES.map((cat) => (
+        {categories.map((cat: any) => (
           <div
             key={cat.id}
             className="relative flex-shrink-0"
@@ -104,7 +105,7 @@ export function CategorySlider() {
 
       {/* Mega menu */}
       {hoveredCat && (() => {
-        const cat = CATEGORIES.find(c => c.id === hoveredCat);
+        const cat = categories.find((c: any) => c.id === hoveredCat);
         return cat ? (
           <div
             className="absolute left-0 right-0 z-50 shadow-lg"

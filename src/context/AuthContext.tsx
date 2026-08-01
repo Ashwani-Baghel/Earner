@@ -36,6 +36,8 @@ export interface AuthUser {
   role: "BUYER" | "SELLER" | "ADMIN" | "SUPER_ADMIN" | null;
   /** true once user has picked a role */
   hasRole: boolean;
+  /** RBAC permissions (e.g. ["users.view", "gigs.manage"], or ["*"] for SUPER_ADMIN) */
+  permissions: string[];
   /** Returns the current Firebase ID token (refreshed if expired) */
   getIdToken: () => Promise<string>;
 }
@@ -111,11 +113,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         setLoading(true);
-        // ── Role resolution ──────────────────────────────────────────────
+        // ── Role & Permissions resolution ────────────────────────────────
         // Priority: Firestore (live) → localStorage (cached) → null (new user)
         let isSeller = false;
         let role: "BUYER" | "SELLER" | "ADMIN" | "SUPER_ADMIN" | null = null;
+        let permissions: string[] = [];
         const cacheKey = `earner_role_${firebaseUser.uid}`;
+        const permsCacheKey = `earner_perms_${firebaseUser.uid}`;
 
         if (firebaseUser) {
           try {
@@ -127,12 +131,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const data = await res.json();
               role = data.role as "BUYER" | "SELLER" | "ADMIN" | "SUPER_ADMIN";
               isSeller = role === "SELLER";
+              permissions = data.permissions || [];
               localStorage.setItem(cacheKey, role ?? "");
+              localStorage.setItem(permsCacheKey, JSON.stringify(permissions));
             } else if (res.status === 404) {
               // User exists in Firebase but not in Postgres (e.g. database reset)
               role = null;
               isSeller = false;
+              permissions = [];
               localStorage.removeItem(cacheKey);
+              localStorage.removeItem(permsCacheKey);
             } else {
               throw new Error("Failed to fetch user from Postgres");
             }
@@ -141,12 +149,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const cached = localStorage.getItem(cacheKey) as "BUYER" | "SELLER" | "ADMIN" | "SUPER_ADMIN" | null;
             role = cached;
             isSeller = cached === "SELLER";
+            try {
+              const cachedPerms = localStorage.getItem(permsCacheKey);
+              if (cachedPerms) permissions = JSON.parse(cachedPerms);
+            } catch { /* ignore */ }
           }
         } else {
           // Should not reach here if firebaseUser is truthy, but keeping structure
           const cached = localStorage.getItem(cacheKey) as "BUYER" | "SELLER" | "ADMIN" | "SUPER_ADMIN" | null;
           role = cached;
           isSeller = cached === "SELLER";
+          try {
+            const cachedPerms = localStorage.getItem(permsCacheKey);
+            if (cachedPerms) permissions = JSON.parse(cachedPerms);
+          } catch { /* ignore */ }
         }
 
         setUser({
@@ -157,6 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isSeller,
           role,
           hasRole: role === "BUYER" || role === "SELLER" || role === "ADMIN" || role === "SUPER_ADMIN",
+          permissions,
           getIdToken: (forceRefresh?: boolean) => firebaseUser.getIdToken(forceRefresh),
         });
       } else {

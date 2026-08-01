@@ -1,94 +1,24 @@
 import Link from "next/link";
-import { CATEGORIES } from "@/lib/mock-data/categories";
+import { useCms } from "../../context/CmsContext";
 
-const dynamicCategories = CATEGORIES.map((cat) => ({
-  label: cat.name,
-  href: `/categories/${cat.slug}`,
-}));
 
-const footerSections = [
-  {
-    title: "Categories",
-    links: [
-      ...dynamicCategories,
-      { label: "Sitemap", href: "#" },
-    ],
-  },
-  {
-    title: "About",
-    links: [
-      { label: "Careers", href: "#" },
-      { label: "Press & News", href: "#" },
-      { label: "Partnerships", href: "#" },
-      { label: "Privacy Policy", href: "/privacy" },
-      { label: "Terms of Service", href: "#" },
-      { label: "Intellectual Property Claims", href: "#" },
-      { label: "Investor Relations", href: "#" },
-    ],
-  },
-  {
-    title: "Support and Education",
-    links: [
-      { label: "Help & Support", href: "#" },
-      { label: "Trust & Safety", href: "#" },
-      { label: "Selling on Earner", href: "#" },
-      { label: "Buying on Earner", href: "#" },
-      { label: "Earner Guides", href: "#" },
-      { label: "Earner Workspace", href: "#" },
-      { label: "Learn", href: "#" },
-    ],
-  },
-  {
-    title: "Community",
-    links: [
-      { label: "Customer Success Stories", href: "#" },
-      { label: "Community Hub", href: "#" },
-      { label: "Forum", href: "#" },
-      { label: "Events", href: "#" },
-      { label: "Blog", href: "#" },
-      { label: "Influencers", href: "#" },
-      { label: "Affiliates", href: "#" },
-      { label: "Podcast", href: "#" },
-      { label: "Invite a Friend", href: "#" },
-      { label: "Become a Seller", href: "/dashboard" },
-      { label: "Community Standards", href: "#" },
-    ],
-  },
-  {
-    title: "Business Solutions",
-    links: [
-      { label: "About Business Solutions", href: "#" },
-      { label: "Earner Pro", href: "#" },
-      { label: "Earner Certified", href: "#" },
-      { label: "Earner Enterprise", href: "#" },
-      { label: "ClearVoice", href: "#" },
-      { label: "Working Not Working", href: "#" },
-      { label: "Contact Sales", href: "#" },
-    ],
-  },
-];
-
-const socialLinks = [
-  { icon: "X", href: "#", label: "Twitter" },
-  { icon: "f", href: "#", label: "Facebook" },
-  { icon: "in", href: "#", label: "LinkedIn" },
-  { icon: "P", href: "#", label: "Pinterest" },
-  { icon: "IG", href: "#", label: "Instagram" },
-];
 
 export function Footer() {
+  const { footer } = useCms();
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer className="bg-white border-t border-[#e4e5e7] mt-auto">
       <div className="container-earner pt-16 pb-8 px-6 lg:px-8 max-w-[1440px] mx-auto">
-        {/* Links Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-y-12 gap-x-8 mb-16">
-          {footerSections.map((section) => (
-            <div key={section.title}>
-              <h4 className="font-bold text-sm text-[#404145] mb-4 uppercase tracking-wide">{section.title}</h4>
-              <ul className="space-y-2">
-                {section.links.map((link) => (
-                  <li key={link.label}>
-                    <Link href={link.href} className="text-sm text-[#74767e] hover:text-[#1dbf73] transition-colors">
+        {/* Dynamic Footer Columns */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 mb-12">
+          {footer?.columns?.map((col: any, idx: number) => (
+            <div key={idx}>
+              <h4 className="font-bold text-slate-900 mb-4">{col.title}</h4>
+              <ul className="space-y-3 text-slate-600 text-[15px]">
+                {col.links?.map((link: any, i: number) => (
+                  <li key={i}>
+                    <Link href={link.url} className="hover:text-teal-600 transition-colors">
                       {link.label}
                     </Link>
                   </li>
@@ -100,35 +30,26 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="border-t border-[#e4e5e7] pt-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Logo */}
           <div className="flex items-center gap-3">
             <Link href="/" className="text-[#404145] text-xl font-black tracking-tight">
               Earner<span className="text-[#1dbf73]">.</span>
             </Link>
-            <p className="text-xs text-[#74767e]">© Earner International Ltd. {new Date().getFullYear()}</p>
+            <p className="text-xs text-[#74767e]">© Earner International Ltd. {currentYear}</p>
           </div>
 
-          {/* Social Icons */}
           <div className="flex items-center gap-3 mt-4 md:mt-0">
-            {socialLinks.map(({ icon, href, label }) => (
-              <a key={label} href={href} aria-label={label}
-                className="h-8 flex items-center justify-center text-[#74767e] hover:text-[#404145] hover:bg-[#f5f5f5] rounded-full w-8 transition-colors text-lg font-bold">
-                {icon}
-              </a>
-            ))}
-          </div>
-
-          {/* Currency/Language */}
-          <div className="flex items-center gap-6 mt-2 md:mt-0 text-sm font-semibold text-[#74767e]">
-            <button className="flex items-center gap-1 hover:text-[#404145] transition-colors">
-              🌐 English
-            </button>
-            <button className="flex items-center gap-1 hover:text-[#404145] transition-colors">
-              ₹ INR
-            </button>
-            <button className="flex items-center gap-1 hover:text-[#404145] transition-colors">
-              ♿
-            </button>
+            <Link href={footer?.social?.twitter || "#"} className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-teal-50 hover:text-teal-600 transition-colors font-bold">
+              X
+            </Link>
+            <Link href={footer?.social?.facebook || "#"} className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-teal-50 hover:text-teal-600 transition-colors font-bold">
+              f
+            </Link>
+            <Link href={footer?.social?.instagram || "#"} className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-teal-50 hover:text-teal-600 transition-colors font-bold">
+              IG
+            </Link>
+            <Link href={footer?.social?.linkedin || "#"} className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-teal-50 hover:text-teal-600 transition-colors font-bold">
+              in
+            </Link>
           </div>
         </div>
       </div>

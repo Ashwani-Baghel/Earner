@@ -10,7 +10,7 @@ export function ConditionalLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   
   // Hide Navbar and Footer on admin dashboards
-  const isDashboard = pathname?.startsWith("/admin");
+  const isDashboard = pathname?.startsWith("/admin") || pathname?.startsWith("/super-admin");
 
   return (
     <>
