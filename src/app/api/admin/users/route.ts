@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const q    = searchParams.get("q") ?? "";
     const role = searchParams.get("role") ?? "";
+    const isSeller = searchParams.get("isSeller") === "true";
     const take = Math.min(Number(searchParams.get("limit") ?? 50), 200);
     const skip = Number(searchParams.get("offset") ?? 0);
 
@@ -26,12 +27,15 @@ export async function GET(req: NextRequest) {
     if (role && ["BUYER", "SELLER", "ADMIN", "SUPER_ADMIN"].includes(role)) {
       where.role = { equals: role as any };
     }
+    if (isSeller) {
+      where.isSeller = true;
+    }
 
     const users = await prisma.user.findMany({
       where,
       select: {
         id: true, name: true, email: true, role: true,
-        isBanned: true, isVerified: true, createdAt: true,
+        isSeller: true, isBanned: true, isVerified: true, createdAt: true,
         _count: { select: { gigsAsSeller: true, ordersAsBuyer: true } },
         adminProfile: {
           select: {
@@ -53,7 +57,23 @@ export async function GET(req: NextRequest) {
 
     const total = await prisma.user.count({ where });
 
-    return NextResponse.json({ users, total });
+    const totalBuyersOnly = await prisma.user.count({
+      where: { isSeller: false }
+    });
+    
+    const totalSellers = await prisma.user.count({
+      where: { isSeller: true }
+    });
+
+    return NextResponse.json({ 
+      users, 
+      total,
+      counts: {
+        total,
+        buyersOnly: totalBuyersOnly,
+        sellers: totalSellers
+      }
+    });
   } catch (e) {
     return handleApiError(e);
   }
@@ -84,6 +104,13 @@ export async function PATCH(req: NextRequest) {
       case "changeRole":
         if (!role || !validRoles.includes(role)) {
           throw new ApiError(400, `Invalid role. Must be one of: ${validRoles.join(", ")}`);
+        }
+        if (role === "SUPER_ADMIN") {
+          throw new ApiError(403, "Cannot directly assign SUPER_ADMIN role.");
+        }
+        const targetUser = await prisma.user.findUnique({ where: { id: userId } });
+        if (targetUser?.role === "SUPER_ADMIN") {
+          throw new ApiError(403, "Cannot change the role of a SUPER_ADMIN.");
         }
         data = { role: role as any };
         break;

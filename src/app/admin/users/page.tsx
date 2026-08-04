@@ -13,6 +13,7 @@ interface AdminUser {
   role: string;
   isBanned: boolean;
   isVerified: boolean;
+  isSeller: boolean;
   createdAt: string;
   _count: { gigsAsSeller: number; ordersAsBuyer: number };
 }
@@ -23,10 +24,12 @@ function AdminUsersPageContent() {
   const { user } = useAuth();
   const [users, setUsers]       = useState<AdminUser[]>([]);
   const [total, setTotal]       = useState(0);
+  const [counts, setCounts]     = useState({ total: 0, buyersOnly: 0, sellers: 0 });
   const [loading, setLoading]   = useState(true);
   const searchParams = useSearchParams();
   const [q, setQ]               = useState("");
   const [role, setRole]         = useState(searchParams.get("role")?.toUpperCase() || "");
+  const [isSeller, setIsSeller] = useState(searchParams.get("isSeller") === "true");
   const [confirm, setConfirm]   = useState<{ action: string; target: AdminUser; extra?: string } | null>(null);
   const [actioning, setActioning] = useState(false);
 
@@ -34,6 +37,10 @@ function AdminUsersPageContent() {
     const urlRole = searchParams.get("role")?.toUpperCase() || "";
     if (role !== urlRole) {
       setRole(urlRole);
+    }
+    const urlIsSeller = searchParams.get("isSeller") === "true";
+    if (isSeller !== urlIsSeller) {
+      setIsSeller(urlIsSeller);
     }
   }, [searchParams]);
 
@@ -47,6 +54,7 @@ function AdminUsersPageContent() {
       const params = new URLSearchParams({ limit: "100" });
       if (q) params.set("q", q);
       if (role) params.set("role", role);
+      if (isSeller) params.set("isSeller", "true");
       const res = await fetch(`/api/admin/users?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -54,11 +62,12 @@ function AdminUsersPageContent() {
         const data = await res.json();
         setUsers(data.users);
         setTotal(data.total);
+        if (data.counts) setCounts(data.counts);
       }
     } finally {
       setLoading(false);
     }
-  }, [user, q, role]);
+  }, [user, q, role, isSeller]);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
@@ -97,7 +106,11 @@ function AdminUsersPageContent() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-slate-900">User Management</h1>
-            <p className="text-sm text-slate-500 mt-0.5">{total} registered users</p>
+            <div className="flex items-center gap-3 mt-1.5">
+              <span className="text-sm font-medium bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full">{counts.total} Total Users</span>
+              <span className="text-sm font-medium bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full">{counts.buyersOnly} Only Buyer</span>
+              <span className="text-sm font-medium bg-purple-50 text-purple-600 px-2.5 py-0.5 rounded-full">{counts.sellers} Both (Buyer & Seller)</span>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={fetchUsers} className="p-2 rounded-xl hover:bg-slate-100">
@@ -126,6 +139,10 @@ function AdminUsersPageContent() {
                 <option key={r} value={r}>{r}</option>
               ))}
             </select>
+            <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl cursor-pointer transition-colors whitespace-nowrap">
+              <input type="checkbox" checked={isSeller} onChange={e => setIsSeller(e.target.checked)} className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 w-4 h-4 cursor-pointer" />
+              Also a Seller
+            </label>
           </div>
       </div>
 
@@ -160,7 +177,16 @@ function AdminUsersPageContent() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4"><StatusBadge status={u.role} /></td>
+                    <td className="px-5 py-4">
+                      <div className="flex flex-col items-start gap-1.5">
+                        <StatusBadge status={u.role === "SELLER" ? "BUYER" : u.role} />
+                        {u.isSeller && u.role !== "SUPER_ADMIN" && u.role !== "ADMIN" && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200 uppercase tracking-wider">
+                            Also Seller
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-5 py-4">
                       <div className="flex flex-col gap-1">
                         {u.isBanned && <StatusBadge status="BANNED" />}
@@ -180,10 +206,10 @@ function AdminUsersPageContent() {
                       {new Date(u.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-5 py-4">
-                      <div className="flex items-center gap-1.5 flex-wrap">
+                      <div className="flex items-center gap-1.5 flex-nowrap">
                         <button
                           onClick={() => setConfirm({ action: u.isBanned ? "unban" : "ban", target: u })}
-                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                          className={`flex items-center justify-center gap-1 w-[76px] px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                             u.isBanned
                               ? "bg-teal-50 text-teal-700 hover:bg-teal-100"
                               : "bg-orange-50 text-orange-700 hover:bg-orange-100"
@@ -193,28 +219,32 @@ function AdminUsersPageContent() {
                         </button>
                         <button
                           onClick={() => setConfirm({ action: u.isVerified ? "unverify" : "verify", target: u })}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold transition-colors"
+                          className="flex items-center justify-center gap-1 w-[88px] px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold transition-colors"
                         >
                           <UserCheck size={11} /> {u.isVerified ? "Unverify" : "Verify"}
                         </button>
-                        <select
-                          defaultValue=""
-                          onChange={(e) => {
-                            if (e.target.value) {
-                              setConfirm({ action: "changeRole", target: u, extra: e.target.value });
-                              e.target.value = "";
-                            }
-                          }}
-                          className="px-2 py-1.5 text-xs border border-slate-200 rounded-lg bg-white text-slate-600 focus:outline-none"
-                        >
-                          <option value="">Role…</option>
-                          {ROLES.filter((r) => r !== u.role).map((r) => (
-                            <option key={r} value={r}>{r}</option>
-                          ))}
-                        </select>
+                        <div className="w-[84px]">
+                          {u.role !== "SUPER_ADMIN" && (
+                            <select
+                              defaultValue=""
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  setConfirm({ action: "changeRole", target: u, extra: e.target.value });
+                                  e.target.value = "";
+                                }
+                              }}
+                              className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg bg-white text-slate-600 focus:outline-none"
+                            >
+                              <option value="">Role…</option>
+                              {ROLES.filter((r) => r !== u.role && r !== "SUPER_ADMIN").map((r) => (
+                                <option key={r} value={r}>{r}</option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
                         <button
                           onClick={() => setConfirm({ action: "delete", target: u })}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-xs font-semibold transition-colors"
+                          className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-xs font-semibold transition-colors"
                         >
                           <Trash2 size={11} /> Delete
                         </button>

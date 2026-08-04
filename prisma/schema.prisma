@@ -63,6 +63,7 @@ model User {
   name        String
   avatar      String?
   role        Role     @default(BUYER)
+  isSeller    Boolean  @default(false)
   isBanned    Boolean  @default(false)
   isVerified  Boolean  @default(false)
   createdAt   DateTime @default(now())
@@ -96,6 +97,10 @@ model SellerProfile {
   totalOrders  Int      @default(0)
   earnings     Float    @default(0)
   level        String   @default("new") // new | level1 | level2 | top | pro
+  
+  // Advanced Profile
+  occupations       Json?    // Array of { categoryId, categoryName, from, to, subcategories: string[] }
+  structuredSkills  Json?    // Array of { name: string, level: string }
   
   // Social Links
   website      String?

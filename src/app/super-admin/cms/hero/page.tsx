@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Save, Loader2 } from "lucide-react";
+import { Save, Loader2, UploadCloud, Trash2, Image as ImageIcon, Video } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
@@ -16,6 +16,41 @@ export default function HeroCMS() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+
+  const handleMedia = async (file: File) => {
+    const isVideo = file.type.startsWith("video/");
+    const isImage = file.type.startsWith("image/");
+    
+    if (!isVideo && !isImage) {
+      return alert("Invalid file type. Only images and videos are allowed.");
+    }
+    
+    // 2MB for images, 5MB for videos
+    const maxSizeBytes = isVideo ? 5 * 1024 * 1024 : 2 * 1024 * 1024;
+    
+    if (file.size > maxSizeBytes) {
+      return alert(`File is too large. Maximum size is ${isVideo ? "5MB" : "2MB"}.`);
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const json = await res.json();
+      if (json.url) {
+        setData((prev: any) => ({ ...prev, backgroundImageUrl: json.url }));
+      } else {
+        alert(json.error || "Failed to upload.");
+      }
+    } catch (e) {
+      alert("Error uploading media");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   useEffect(() => {
     if (user) fetchData();
@@ -112,14 +147,57 @@ export default function HeroCMS() {
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">Background Image URL (Optional)</label>
-            <input 
-              type="text" 
-              value={data.backgroundImageUrl} 
-              placeholder="https://..."
-              onChange={e => setData({...data, backgroundImageUrl: e.target.value})}
-              className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-teal-500 outline-none"
-            />
+            <label className="block text-sm font-bold text-slate-700 mb-2">Background Image/Video (Optional)</label>
+            <div 
+              className={`relative border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center transition-colors ${dragActive ? 'border-teal-500 bg-teal-50' : 'border-slate-300 hover:border-slate-400'}`}
+              onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragActive(false);
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                  handleMedia(e.dataTransfer.files[0]);
+                }
+              }}
+            >
+              <input 
+                type="file" 
+                accept="image/*,video/mp4,video/webm,video/ogg"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleMedia(e.target.files[0]);
+                  }
+                }}
+              />
+              {uploading ? (
+                <Loader2 className="animate-spin text-teal-600 mb-2" size={24} />
+              ) : data.backgroundImageUrl ? (
+                <div className="relative w-full h-24 flex items-center justify-center bg-slate-50 rounded-lg mb-2 overflow-hidden">
+                  {data.backgroundImageUrl.startsWith("data:video") || data.backgroundImageUrl.match(/\\.(mp4|webm|ogg)$/i) ? (
+                    <video src={data.backgroundImageUrl} className="max-h-full max-w-full object-contain" autoPlay muted loop playsInline />
+                  ) : (
+                    <img src={data.backgroundImageUrl} alt="Background Preview" className="max-h-full max-w-full object-contain" />
+                  )}
+                </div>
+              ) : (
+                <UploadCloud className="text-slate-400 mb-2" size={24} />
+              )}
+              <div className="text-sm font-semibold text-teal-600">
+                {uploading ? "Uploading..." : data.backgroundImageUrl ? "Click or drag to replace" : "Click or drag to upload media"}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">Image up to 2MB, Video up to 5MB</p>
+            </div>
+            {data.backgroundImageUrl && (
+              <div className="mt-2 text-right">
+                <button 
+                  onClick={() => setData({ ...data, backgroundImageUrl: "" })}
+                  className="text-xs font-bold text-red-500 hover:text-red-600 flex items-center justify-end gap-1 w-full"
+                >
+                  <Trash2 size={12} /> Remove Media
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

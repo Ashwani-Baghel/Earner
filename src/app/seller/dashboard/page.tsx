@@ -4,12 +4,14 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { Info, Briefcase, ChevronRight, CheckCircle2, Loader2, Edit, Trash2, MoreHorizontal } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
+import { useCms } from "@/context/CmsContext";
 import Link from "next/link";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 
 export default function SellerDashboard() {
   const { user, loading } = useAuth();
+  const { hero } = useCms();
   const router = useRouter();
   const [fetching, setFetching] = useState(true);
 
@@ -199,7 +201,7 @@ export default function SellerDashboard() {
                     {gigs.length} Total
                   </span>
                 </h2>
-                <p className="text-slate-500 text-sm">Manage and track your service performance.</p>
+                <p className="text-slate-500 text-sm">{hero?.subheadline || "Manage and track your service performance."}</p>
               </div>
               <Link href="/seller/gigs/new" className="bg-slate-900 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-slate-800 transition-colors shadow-sm whitespace-nowrap">
                 Create New Gig

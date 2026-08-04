@@ -75,17 +75,16 @@ export function Navbar() {
 
   const isSellerView = user?.role === "SELLER" && pathname.startsWith("/seller");
   const dashboardHref =
-    user?.role === "SELLER"
-      ? "/seller/dashboard"
-      : user?.role === "BUYER"
-      ? "/buyer/dashboard"
-      : "/";
+    user?.role === "SELLER" ? "/seller/dashboard" :
+    user?.role === "SUPER_ADMIN" ? "/super-admin" :
+    user?.role === "ADMIN" ? "/admin" :
+    "/buyer/dashboard";
 
-  const logoHref = !user
-    ? "/"
-    : user.role === "SELLER"
-    ? "/seller/dashboard"
-    : "/buyer/dashboard";
+  const logoHref = !user ? "/" :
+    user?.role === "SELLER" ? "/seller/dashboard" :
+    user?.role === "SUPER_ADMIN" ? "/super-admin" :
+    user?.role === "ADMIN" ? "/admin" :
+    "/buyer/dashboard";
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -300,20 +299,22 @@ export function Navbar() {
                     )}
 
                     {/* Role switch */}
-                    {!isSellerView ? (
-                      <button
-                        onClick={() => handleSwitchRole("SELLER")}
-                        className="font-semibold hover:text-teal-600 transition-colors"
-                      >
-                        Switch to Selling
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleSwitchRole("BUYER")}
-                        className="font-semibold hover:text-teal-600 transition-colors"
-                      >
-                        Switch to Buying
-                      </button>
+                    {!isAdmin && (
+                      !isSellerView ? (
+                        <button
+                          onClick={() => handleSwitchRole("SELLER")}
+                          className="font-semibold hover:text-teal-600 transition-colors"
+                        >
+                          Switch to Selling
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleSwitchRole("BUYER")}
+                          className="font-semibold hover:text-teal-600 transition-colors"
+                        >
+                          Switch to Buying
+                        </button>
+                      )
                     )}
 
                     {/* Avatar + dropdown */}
@@ -356,15 +357,7 @@ export function Navbar() {
                             >
                               <BarChart2 size={15} /> Dashboard
                             </Link>
-                            {user.role === "ADMIN" && (
-                              <Link
-                                href="/admin"
-                                onClick={() => setUserMenuOpen(false)}
-                                className="flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors"
-                              >
-                                <User size={15} /> Admin Panel
-                              </Link>
-                            )}
+                            {/* Removed Admin Panel link since Dashboard now points to it */}
                           </div>
 
                           {/* Sign out */}
@@ -463,6 +456,26 @@ export function Navbar() {
                     <p className="text-xs text-slate-500 truncate">{user.email}</p>
                   </div>
                 </div>
+                
+                {/* Mobile Role Switch */}
+                {!isAdmin && (
+                  !isSellerView ? (
+                    <button
+                      onClick={() => { handleSwitchRole("SELLER"); setMobileMenuOpen(false); }}
+                      className="block w-full text-left text-sm font-bold text-teal-600 py-3 hover:text-teal-700 transition-colors border-b border-slate-50"
+                    >
+                      Switch to Selling
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { handleSwitchRole("BUYER"); setMobileMenuOpen(false); }}
+                      className="block w-full text-left text-sm font-bold text-teal-600 py-3 hover:text-teal-700 transition-colors border-b border-slate-50"
+                    >
+                      Switch to Buying
+                    </button>
+                  )
+                )}
+
                 {isSellerView ? (
                   <>
                     <Link href="/seller/dashboard" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-bold text-slate-800 py-3 hover:text-teal-600 border-b border-slate-50">Dashboard</Link>

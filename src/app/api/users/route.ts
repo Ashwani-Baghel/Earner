@@ -28,6 +28,12 @@ export async function POST(req: NextRequest) {
       throw new ApiError(400, "Invalid role. Must be BUYER or SELLER.");
     }
 
+    // Check if user is already an admin
+    const existingUser = await prisma.user.findUnique({ where: { id: decoded.uid } });
+    if (existingUser && (existingUser.role === "ADMIN" || existingUser.role === "SUPER_ADMIN")) {
+      throw new ApiError(403, "Admins cannot switch to Buyer or Seller roles.");
+    }
+
     // Upsert user — id is always the Firebase UID from the verified token
     const user = await prisma.user.upsert({
       where: { id: decoded.uid },
@@ -37,11 +43,13 @@ export async function POST(req: NextRequest) {
         name: name ?? decoded.name ?? "Anonymous",
         avatar: avatar ?? decoded.picture ?? null,
         role,
+        isSeller: role === "SELLER",
       },
       update: {
         name: name ?? decoded.name ?? undefined,
         avatar: avatar ?? decoded.picture ?? undefined,
         role,
+        isSeller: role === "SELLER" ? true : undefined,
       },
     });
 

@@ -24,6 +24,8 @@ export function LoginModal({ open, onClose, onSwitchToRegister }: LoginModalProp
   const [showPw, setShowPw] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [loginType, setLoginType] = useState<"USER" | "ADMIN">("USER");
+  const [loginAsSeller, setLoginAsSeller] = useState(false);
 
   /** After sign-in, check Postgres for role and redirect accordingly */
   const redirectAfterLogin = async () => {
@@ -38,16 +40,56 @@ export function LoginModal({ open, onClose, onSwitchToRegister }: LoginModalProp
       
       if (res.ok) {
         const data = await res.json();
-        if (data.role === "SELLER") {
+        const isAdmin = data.role === "ADMIN" || data.role === "SUPER_ADMIN";
+
+        if (loginType === "ADMIN" && !isAdmin) {
+          const { auth } = await import("../../lib/firebaseClient");
+          await auth.signOut();
+          throw new Error("Access denied. You do not have admin privileges.");
+        }
+        if (loginType === "USER" && isAdmin) {
+          const { auth } = await import("../../lib/firebaseClient");
+          await auth.signOut();
+          throw new Error("Access denied. Please select 'Admin' to log into the admin panel.");
+        }
+
+        let finalRole = data.role;
+
+        // Auto-switch to seller if they checked the box and aren't admin
+        if (loginType === "USER" && loginAsSeller && !isAdmin && data.role !== "SELLER") {
+          const { auth } = await import("../../lib/firebaseClient");
+          await fetch("/api/users", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              role: "SELLER",
+              name: auth?.currentUser?.displayName ?? "Anonymous",
+              email: auth?.currentUser?.email ?? "",
+              avatar: auth?.currentUser?.photoURL ?? null,
+            }),
+          });
+          finalRole = "SELLER";
+          localStorage.setItem(`earner_role_${auth?.currentUser?.uid}`, "SELLER");
+        }
+
+        if (finalRole === "SELLER") {
           router.push("/seller/dashboard");
+        } else if (finalRole === "SUPER_ADMIN") {
+          router.push("/super-admin");
+        } else if (finalRole === "ADMIN") {
+          router.push("/admin");
         } else {
           router.push("/buyer/dashboard");
         }
+        onClose();
         return;
       }
-    } catch { /* ignore */ } finally {
-      onClose();
-    }
+    } catch (err: any) { 
+      throw err; // throw back to handleSubmit so it can toast the error
+    } 
     // No role found or error → default to BUYER dashboard
     router.push("/buyer/dashboard");
   };
@@ -58,6 +100,8 @@ export function LoginModal({ open, onClose, onSwitchToRegister }: LoginModalProp
       setPassword("");
       setShowPw(false);
       setIsForgotPassword(false);
+      setLoginType("USER");
+      setLoginAsSeller(false);
       clearError();
     }
   }, [open, clearError]);
@@ -145,6 +189,24 @@ export function LoginModal({ open, onClose, onSwitchToRegister }: LoginModalProp
             Join free
           </button>
         </p>
+
+        {/* Login Type Toggle */}
+        <div className="mt-6 flex bg-white/10 rounded-xl p-1 w-full max-w-xs mx-auto backdrop-blur-sm border border-white/10">
+          <button 
+            type="button"
+            onClick={() => setLoginType("USER")}
+            className={`flex-1 py-1.5 rounded-lg text-sm font-semibold transition-all ${loginType === "USER" ? "bg-white text-teal-800 shadow-sm" : "text-white hover:bg-white/10"}`}
+          >
+            User
+          </button>
+          <button 
+            type="button"
+            onClick={() => setLoginType("ADMIN")}
+            className={`flex-1 py-1.5 rounded-lg text-sm font-semibold transition-all ${loginType === "ADMIN" ? "bg-white text-teal-800 shadow-sm" : "text-white hover:bg-white/10"}`}
+          >
+            Admin
+          </button>
+        </div>
       </div>
 
       <div className="space-y-5">
@@ -163,8 +225,8 @@ export function LoginModal({ open, onClose, onSwitchToRegister }: LoginModalProp
           </div>
         )}
 
-        {/* Google */}
-        {!isForgotPassword && (
+        {/* Google (Hide for Admin) */}
+        {!isForgotPassword && loginType !== "ADMIN" && (
           <>
             <button
               onClick={handleGoogle}
@@ -221,6 +283,21 @@ export function LoginModal({ open, onClose, onSwitchToRegister }: LoginModalProp
                   Forgot Password?
                 </button>
               </div>
+            </div>
+          )}
+
+          {!isForgotPassword && loginType === "USER" && (
+            <div className="flex items-center gap-2 mt-2">
+              <input
+                type="checkbox"
+                id="loginAsSeller"
+                checked={loginAsSeller}
+                onChange={(e) => setLoginAsSeller(e.target.checked)}
+                className="w-4 h-4 text-[#1dbf73] rounded focus:ring-[#1dbf73] border-gray-300"
+              />
+              <label htmlFor="loginAsSeller" className="text-sm text-[#404145] font-semibold cursor-pointer">
+                Login as Seller
+              </label>
             </div>
           )}
 

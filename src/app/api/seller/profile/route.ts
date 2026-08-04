@@ -6,6 +6,7 @@ export async function PUT(req: NextRequest) {
   try {
     const decoded = await requireAuth(req);
     const body = await req.json() as {
+      name?: string;
       tagline?: string;
       bio?: string;
       skills?: string[];
@@ -14,6 +15,8 @@ export async function PUT(req: NextRequest) {
       linkedin?: string;
       github?: string;
       twitter?: string;
+      occupations?: any[];
+      structuredSkills?: any[];
     };
 
     const user = await prisma.user.findUnique({ where: { id: decoded.uid } });
@@ -33,6 +36,8 @@ export async function PUT(req: NextRequest) {
         linkedin: body.linkedin,
         github: body.github,
         twitter: body.twitter,
+        occupations: body.occupations ? JSON.parse(JSON.stringify(body.occupations)) : undefined,
+        structuredSkills: body.structuredSkills ? JSON.parse(JSON.stringify(body.structuredSkills)) : undefined,
       },
       update: {
         tagline: body.tagline,
@@ -43,8 +48,17 @@ export async function PUT(req: NextRequest) {
         linkedin: body.linkedin,
         github: body.github,
         twitter: body.twitter,
+        occupations: body.occupations ? JSON.parse(JSON.stringify(body.occupations)) : undefined,
+        structuredSkills: body.structuredSkills ? JSON.parse(JSON.stringify(body.structuredSkills)) : undefined,
       }
     });
+
+    if (body.name) {
+      await prisma.user.update({
+        where: { id: decoded.uid },
+        data: { name: body.name }
+      });
+    }
 
     return NextResponse.json(updatedProfile);
   } catch (e) {

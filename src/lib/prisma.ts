@@ -10,6 +10,8 @@
  *   1. Add DATABASE_URL to .env.local (get from Supabase or Neon)
  *   2. Run: npx prisma migrate dev --name init
  *   3. Run: npx prisma generate
+ * 
+ * Trigger Fast Refresh.
  */
 
 import { PrismaClient } from "@prisma/client";
