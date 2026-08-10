@@ -7,6 +7,10 @@ interface CmsContextType {
   hero: any;
   footer: any;
   categories: any[];
+  announcement?: any;
+  contact?: any;
+  socials?: any;
+  faqs?: any;
 }
 
 const CmsContext = createContext<CmsContextType | undefined>(undefined);

@@ -39,6 +39,24 @@ const SETTINGS_CATEGORIES = [
   { id: "system", label: "System" }
 ];
 
+const CMS_CATEGORIES = [
+  { id: "header", label: "Header Builder" },
+  { id: "footer", label: "Footer Builder" },
+  { id: "hero", label: "Hero Section" },
+  { id: "homepage-builder", label: "Homepage Builder" },
+  { id: "navigation-menus", label: "Navigation Menus" },
+  { id: "categories", label: "Categories & Mega Menu" },
+  { id: "banners-sliders", label: "Banners & Sliders" },
+  { id: "testimonials", label: "Testimonials" },
+  { id: "faqs", label: "FAQs" },
+  { id: "blogs", label: "Blogs" },
+  { id: "static-pages", label: "Static Pages" },
+  { id: "contact-information", label: "Contact Information" },
+  { id: "announcement-bar", label: "Announcement Bar" },
+  { id: "social-links", label: "Social Links" },
+  { id: "theme-customization", label: "Theme Customization" }
+];
+
 export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, signOut } = useAuth();
   const router   = useRouter();
@@ -102,7 +120,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
 
       {/* ── Sidebar ── */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 flex-shrink-0 transition-transform duration-300 md:static md:translate-x-0
+        fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col transition-transform duration-300 md:static md:translate-x-0
         ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
       `}>
 
@@ -176,10 +194,19 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
             </button>
             {contentOpen && (
               <div className="mt-1 ml-4 pl-4 border-l-2 border-slate-100 flex flex-col gap-1">
-                <Link href="/super-admin/cms/header" className={`px-3 py-2 text-sm rounded-xl transition-colors ${pathname === '/super-admin/cms/header' ? 'bg-teal-50 text-teal-700 font-bold' : 'text-slate-600 hover:bg-slate-100'}`}>Header</Link>
-                <Link href="/super-admin/cms/hero" className={`px-3 py-2 text-sm rounded-xl transition-colors ${pathname === '/super-admin/cms/hero' ? 'bg-teal-50 text-teal-700 font-bold' : 'text-slate-600 hover:bg-slate-100'}`}>Hero Section</Link>
-                <Link href="/super-admin/cms/categories" className={`px-3 py-2 text-sm rounded-xl transition-colors ${pathname === '/super-admin/cms/categories' ? 'bg-teal-50 text-teal-700 font-bold' : 'text-slate-600 hover:bg-slate-100'}`}>Categories</Link>
-                <Link href="/super-admin/cms/footer" className={`px-3 py-2 text-sm rounded-xl transition-colors ${pathname === '/super-admin/cms/footer' ? 'bg-teal-50 text-teal-700 font-bold' : 'text-slate-600 hover:bg-slate-100'}`}>Footer</Link>
+                {CMS_CATEGORIES.map(cat => {
+                  const href = `/super-admin/cms/${cat.id}`;
+                  const isActive = pathname === href;
+                  return (
+                    <Link 
+                      key={cat.id} 
+                      href={href} 
+                      className={`px-3 py-2 text-sm rounded-xl transition-colors ${isActive ? 'bg-teal-50 text-teal-700 font-bold' : 'text-slate-600 hover:bg-slate-100'}`}
+                    >
+                      {cat.label}
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -197,13 +224,14 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
             </Link>
           </div>
 
-          {/* Settings Dropdown */}
+          {/* Settings Link */}
           <div className="pt-2 mt-2 border-t border-slate-100">
-            <button
-              onClick={() => setSettingsOpen(!settingsOpen)}
+            <Link
+              href="/super-admin/settings/general"
+              onClick={() => setMobileMenuOpen(false)}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all group ${
                 pathname.startsWith("/super-admin/settings")
-                  ? "text-teal-700"
+                  ? "bg-teal-50 text-teal-700"
                   : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
               }`}
             >
@@ -212,30 +240,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
                 className={pathname.startsWith("/super-admin/settings") ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"}
               />
               <span className="flex-1 text-left">Settings</span>
-              <ChevronRight size={16} className={`text-slate-400 transition-transform ${settingsOpen ? 'rotate-90' : ''}`} />
-            </button>
-            
-            {settingsOpen && (
-              <div className="mt-1 ml-4 pl-4 border-l-2 border-slate-100 flex flex-col gap-1">
-                {SETTINGS_CATEGORIES.map(cat => {
-                  const isActive = pathname === `/super-admin/settings/${cat.id}`;
-                  return (
-                    <Link 
-                      key={cat.id}
-                      href={`/super-admin/settings/${cat.id}`}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        isActive
-                          ? "bg-teal-50 text-teal-700"
-                          : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-                      }`}
-                    >
-                      {cat.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
+            </Link>
           </div>
         </nav>
 

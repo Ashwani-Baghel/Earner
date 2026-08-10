@@ -25,7 +25,12 @@ export async function getCmsConfig() {
     social: { twitter: "", facebook: "", instagram: "", linkedin: "" }
   };
 
-  return { header, hero, footer };
+  const announcement = configs.find(c => c.key === "announcement-bar")?.data || null;
+  const contact = configs.find(c => c.key === "contact-information")?.data || null;
+  const socials = configs.find(c => c.key === "social-links")?.data || null;
+  const faqs = configs.find(c => c.key === "faqs")?.data || null;
+
+  return { header, hero, footer, announcement, contact, socials, faqs };
 }
 
 export async function getCmsCategories() {
