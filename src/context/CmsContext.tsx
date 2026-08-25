@@ -11,6 +11,10 @@ interface CmsContextType {
   contact?: any;
   socials?: any;
   faqs?: any;
+  banners?: any;
+  testimonials?: any;
+  theme?: any;
+  globalSettings?: any;
 }
 
 const CmsContext = createContext<CmsContextType | undefined>(undefined);

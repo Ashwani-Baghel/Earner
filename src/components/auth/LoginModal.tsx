@@ -44,12 +44,12 @@ export function LoginModal({ open, onClose, onSwitchToRegister }: LoginModalProp
 
         if (loginType === "ADMIN" && !isAdmin) {
           const { auth } = await import("../../lib/firebaseClient");
-          await auth.signOut();
+          if (auth) await auth.signOut();
           throw new Error("Access denied. You do not have admin privileges.");
         }
         if (loginType === "USER" && isAdmin) {
           const { auth } = await import("../../lib/firebaseClient");
-          await auth.signOut();
+          if (auth) await auth.signOut();
           throw new Error("Access denied. Please select 'Admin' to log into the admin panel.");
         }
 

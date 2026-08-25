@@ -5,13 +5,16 @@ import { useRouter } from "next/navigation";
 import { Info, Briefcase, ChevronRight, CheckCircle2, Loader2, Edit, Trash2, MoreHorizontal } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { useCms } from "@/context/CmsContext";
+import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import Link from "next/link";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import { PromoSlider } from "@/components/promotions/PromoSlider";
 
 export default function SellerDashboard() {
   const { user, loading } = useAuth();
-  const { hero } = useCms();
+  const { hero, faqs } = useCms();
+  const sellerFaqs = (faqs?.items || []).filter((f: any) => f.target === "SELLER" || f.target === "BOTH");
   const router = useRouter();
   const [fetching, setFetching] = useState(true);
 
@@ -126,6 +129,7 @@ export default function SellerDashboard() {
 
   return (
     <div className="bg-[#f7f7f7] min-h-screen pb-20">
+      <PromoSlider placement="SELLER" />
       <div className="max-w-6xl mx-auto pt-8 px-4 sm:px-6 lg:px-8">
 
         {/* ── Top Profile Card ── */}
@@ -354,9 +358,20 @@ export default function SellerDashboard() {
             </div>
           </div>
         )}
-
+        
       </div>
-
+      
+        {/* ── Dashboard FAQs ── */}
+        {sellerFaqs.length > 0 && (
+          <div className="pt-8 mt-12 border-t border-slate-200">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">Frequently Asked Questions</h2>
+              <p className="text-slate-600">Find quick answers to the most common questions from Sellers.</p>
+            </div>
+            <FaqAccordion faqs={sellerFaqs} />
+          </div>
+        )}
+        
       {/* Delete Confirmation Modal */}
       {gigToDelete && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">

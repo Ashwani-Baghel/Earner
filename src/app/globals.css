@@ -38,19 +38,24 @@
   width: 6px;
   height: 6px;
 }
+
 @layer components {
+
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
+
   ::-webkit-scrollbar-track {
     background: #f1f1f1;
   }
+
   ::-webkit-scrollbar-thumb {
     background: #c8c9cc;
     border-radius: 3px;
   }
+
   ::-webkit-scrollbar-thumb:hover {
     background: #9fa2a8;
   }
@@ -73,6 +78,7 @@
     line-clamp: 2;
     -webkit-box-orient: vertical;
   }
+
   .line-clamp-3 {
     overflow: hidden;
     display: -webkit-box;
@@ -86,6 +92,7 @@
     overflow-x: auto;
     scrollbar-width: none;
   }
+
   .scroll-container::-webkit-scrollbar {
     display: none;
   }
@@ -98,17 +105,80 @@
   .skeleton {
     background: linear-gradient(90deg, #e8e8e8 25%, #f0f0f0 50%, #e8e8e8 75%);
     background-size: 200px 100%;
-    animation: skeleton-loading 1.5s infinite;
+    animation: skeleton-loading 1.5s infinite linear;
+  }
+
+  /* Rich text output from CMS */
+  .ql-editor.rich-text-output {
+    word-break: break-word;
+    overflow-wrap: break-word;
+    color: #334155 !important;
+    line-height: 1.7 !important;
+    font-size: 16px !important;
+    font-family: inherit !important;
+    white-space: normal !important;
+  }
+
+  .ql-editor.rich-text-output p {
+    margin-bottom: 1.25em !important;
+  }
+
+  .ql-editor.rich-text-output h1,
+  .ql-editor.rich-text-output h2,
+  .ql-editor.rich-text-output h3,
+  .ql-editor.rich-text-output h4,
+  .ql-editor.rich-text-output h5,
+  .ql-editor.rich-text-output h6 {
+    margin-top: 1.5em !important;
+    margin-bottom: 0.75em !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+  }
+
+  .ql-editor.rich-text-output h1 {
+    font-size: 2.25em !important;
+  }
+
+  .ql-editor.rich-text-output h2 {
+    font-size: 1.5em !important;
+  }
+
+  .ql-editor.rich-text-output h3 {
+    font-size: 1.25em !important;
+  }
+
+  .ql-editor.rich-text-output ul {
+    list-style-type: disc !important;
+    padding-left: 1.5em !important;
+    margin-bottom: 1.25em !important;
+  }
+
+  .ql-editor.rich-text-output ol {
+    list-style-type: decimal !important;
+    padding-left: 1.5em !important;
+    margin-bottom: 1.25em !important;
+  }
+
+  .ql-editor.rich-text-output li {
+    margin-bottom: 0.5em !important;
+  }
+
+  .ql-editor.rich-text-output a {
+    color: #0d9488 !important;
+    text-decoration: underline !important;
+  }
+
+  .ql-editor.rich-text-output a:hover {
+    color: #0f766e !important;
   }
 
   /* Hero gradient overlay */
   .hero-overlay {
-    background: linear-gradient(
-      to right,
-      rgba(0, 0, 0, 0.7) 0%,
-      rgba(0, 0, 0, 0.3) 60%,
-      transparent 100%
-    );
+    background: linear-gradient(to right,
+        rgba(0, 0, 0, 0.7) 0%,
+        rgba(0, 0, 0, 0.3) 60%,
+        transparent 100%);
   }
 
   .animate-fade-in-up {
@@ -129,8 +199,13 @@
   }
 
   /* Star rating */
-  .star-filled { color: var(--color-accent-yellow); }
-  .star-empty { color: var(--color-border-light); }
+  .star-filled {
+    color: var(--color-accent-yellow);
+  }
+
+  .star-empty {
+    color: var(--color-border-light);
+  }
 
   /* Gig package tabs */
   .package-tab-active {
@@ -166,14 +241,18 @@
   .premium-card {
     background-color: var(--color-bg-white);
     border: 1px solid var(--color-border-light);
-    border-radius: 1.25rem; /* Upwork style rounded corners */
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05); /* Softer shadow */
+    border-radius: 1.25rem;
+    /* Upwork style rounded corners */
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    /* Softer shadow */
     transition: all 0.3s ease;
   }
 
   .premium-card:hover {
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08); /* Float effect */
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+    /* Float effect */
     transform: translateY(-2px);
-    border-color: rgba(13, 148, 136, 0.4); /* Teal border on hover */
+    border-color: rgba(13, 148, 136, 0.4);
+    /* Teal border on hover */
   }
 }

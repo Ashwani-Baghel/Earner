@@ -4,10 +4,12 @@ import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { HeroSection } from "@/components/home/HeroSection";
+import { PromoSlider } from "@/components/promotions/PromoSlider";
 import { GigCategoryGrid } from "@/components/home/GigCategoryGrid";
 import { PopularServices } from "@/components/home/PopularServices";
 import { EverythingSection } from "@/components/home/EverythingSection";
 import { GuidesSection } from "@/components/home/GuidesSection";
+import { TestimonialSlider } from "@/components/promotions/TestimonialSlider";
 import { DoableCTA } from "@/components/home/DoableCTA";
 import { Loader2 } from "lucide-react";
 
@@ -36,10 +38,12 @@ export default function HomePage() {
   return (
     <div className="flex flex-col">
       <HeroSection />
+      <PromoSlider placement="HOMEPAGE" />
       <GigCategoryGrid />
       <PopularServices />
       <EverythingSection />
       <GuidesSection />
+      <TestimonialSlider />
       <DoableCTA />
     </div>
   );

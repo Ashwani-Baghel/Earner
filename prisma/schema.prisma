@@ -425,3 +425,23 @@ model CmsConfig {
   data      Json
   updatedAt DateTime @updatedAt
 }
+
+// ─── Blog System ──────────────────────────────────────────────────────────────
+
+model Blog {
+  id              String    @id @default(cuid())
+  title           String
+  slug            String    @unique
+  content         String    @db.Text
+  featuredImage   String?
+  author          String
+  category        String
+  tags            String[]
+  status          String    @default("DRAFT") // DRAFT | PUBLISHED
+  publishDate     DateTime?
+  seoTitle        String?
+  seoDescription  String?
+  ogImage         String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}

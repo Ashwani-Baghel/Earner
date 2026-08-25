@@ -7,8 +7,7 @@ import { Search } from "lucide-react";
 import {
   SEARCH_PLACEHOLDERS,
   QUICK_SEARCHES,
-  TRUSTED_BRANDS,
-} from "@/lib/constants";
+} from "@/lib/constants/home";
 import { useCms } from "../../context/CmsContext";
 
 export function HeroSection() {
@@ -89,12 +88,7 @@ export function HeroSection() {
         {/* ── Quick-search pills ── */}
         <div className="mt-6 sm:mt-8 flex flex-wrap items-center gap-2 sm:gap-3 w-full max-w-[850px]">
           <span className="text-white/80 font-medium mr-1 sm:mr-2 text-sm sm:text-base drop-shadow-sm">Popular:</span>
-          {[
-            "Website Development",
-            "Logo Design",
-            "SEO",
-            "Video Editing",
-          ].map((item) => (
+          {(hero?.popularSearches || []).map((item: string) => (
             <button
               key={item}
               onClick={() => handlePill(item)}
@@ -112,7 +106,7 @@ export function HeroSection() {
           <span className="text-white/80 font-[600] text-[13px] sm:text-[14px] shrink-0 mr-2 sm:mr-4">
             Trusted by:
           </span>
-          {TRUSTED_BRANDS.map((brand) => (
+          {(hero?.trustedBrands || []).map((brand: any) => (
             <div key={brand.name} className="flex items-center justify-center text-white/90 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all">
               <span dangerouslySetInnerHTML={{ __html: `<span style="${brand.style}">${brand.wordmark}</span>` }} />
             </div>

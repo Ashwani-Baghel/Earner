@@ -6,6 +6,7 @@ import { filterGigs, sortGigs } from "@/lib/utils";
 import type { SearchFilters as ISearchFilters, SortOption } from "@/lib/types";
 import { GigCard } from "@/components/gig/GigCard";
 import { SearchFilters } from "@/components/search/SearchFilters";
+import { PromoSlider } from "@/components/promotions/PromoSlider";
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "relevance", label: "Best Match" },
@@ -52,9 +53,11 @@ function SearchContent() {
   }, [gigs, filters, q, sort]);
 
   return (
-    <div className="container-earner py-8">
-      {/* Header */}
-      <div className="mb-6">
+    <>
+      <PromoSlider placement="SEARCH" />
+      <div className="container-earner py-8">
+        {/* Header */}
+        <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#404145]">
           {q ? `Results for "${q}"` : "All Services"}
         </h1>
@@ -111,6 +114,7 @@ function SearchContent() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

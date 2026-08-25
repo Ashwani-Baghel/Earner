@@ -29,13 +29,7 @@ const DEFAULT_FOOTER = {
         { label: "Press & News", url: "#" },
       ]
     }
-  ],
-  social: {
-    twitter: "",
-    facebook: "",
-    instagram: "",
-    linkedin: ""
-  }
+  ]
 };
 
 export default function FooterCMS() {
@@ -214,23 +208,6 @@ export default function FooterCMS() {
             ))}
           </div>
         </FormSection>
-
-        <FormSection title="Social Overrides (Optional)" description="Override the global social links for the footer specifically.">
-          <div className="grid grid-cols-2 gap-4">
-            {["facebook", "twitter", "instagram", "linkedin"].map(network => (
-              <div key={network}>
-                <label className="block text-sm font-medium text-slate-700 mb-1 capitalize">{network}</label>
-                <Input 
-                  value={data.social?.[network] || ""} 
-                  onChange={e => setSocial(network, e.target.value)} 
-                  placeholder={`https://${network}.com/...`} 
-                />
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-slate-500 mt-2">If left empty, the footer will fall back to the global Social Links configured in the CMS.</p>
-        </FormSection>
-
       </div>
     </SettingsPageTemplate>
   );

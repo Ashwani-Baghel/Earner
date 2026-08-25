@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { GigCard } from "@/components/gig/GigCard";
 import { prisma } from "@/lib/prisma";
+import { PromoSlider } from "@/components/promotions/PromoSlider";
+import { TestimonialSlider } from "@/components/promotions/TestimonialSlider";
 
 interface Props { params: Promise<{ category: string }> }
 
@@ -84,6 +86,7 @@ export default async function CategoryPage({ params, searchParams }: { params: P
   }) as any[];
   return (
     <div>
+      <PromoSlider placement="CATEGORY" />
       {/* ── Category Hero Banner ── */}
       <div
         className="relative overflow-hidden flex items-center"
@@ -191,6 +194,9 @@ export default async function CategoryPage({ params, searchParams }: { params: P
           </div>
         </div>
       )}
+
+      {/* ── Testimonials ── */}
+      <TestimonialSlider />
     </div>
   );
 }

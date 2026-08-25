@@ -6,7 +6,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Search, Bell, MessageSquare, ShoppingCart,
   ChevronDown, Globe, LogOut, User,
-  BarChart2, Heart, Menu, X, ChevronLeft, ChevronRight
+  BarChart2, Heart, Menu, X, ChevronLeft, ChevronRight, HelpCircle, Phone
 } from "lucide-react";
 import { Avatar } from "../ui/Avatar";
 import { LoginModal } from "../auth/LoginModal";
@@ -73,7 +73,9 @@ export function Navbar() {
 
   useBodyScrollLock(mobileMenuOpen);
 
-  const isSellerView = user?.role === "SELLER" && pathname.startsWith("/seller");
+  const isSellerView = pathname?.startsWith("/seller");
+  const resolvedHelpLink = isSellerView ? "/seller/help" : (user?.role === "USER" ? "/help/buyer" : "/help");
+
   const dashboardHref =
     user?.role === "SELLER" ? "/seller/dashboard" :
     user?.role === "SUPER_ADMIN" ? "/super-admin" :
@@ -130,16 +132,11 @@ export function Navbar() {
 
   return (
     <>
-      {/* ═══════════════════════════════════════════════════════════
-          HEADER — sticky wrapper that holds BOTH rows
-      ═══════════════════════════════════════════════════════════ */}
       <header className="bg-white border-b border-slate-200 relative z-50">
 
-        {/* ── ROW 1: Logo · Search · User Actions ── */}
         <div className="w-full max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
           <div className="flex items-center h-16 lg:h-[68px] gap-4 lg:gap-8">
 
-            {/* Logo */}
             <div className="flex items-center shrink-0">
               <Link href={logoHref} className="flex items-center gap-2 relative z-[60]">
                 {header?.logoImageUrl ? (
@@ -155,10 +152,8 @@ export function Navbar() {
               </Link>
             </div>
 
-            {/* Center: Seller nav links OR Buyer search bar */}
             <div className="flex-1 flex items-center justify-start lg:justify-center min-w-0">
               {isSellerView ? (
-                /* ── Seller centre nav ── */
                 <nav className="hidden lg:flex items-center gap-7 text-[13px] font-semibold text-slate-600">
                   <Link
                     href="/seller/dashboard"
@@ -167,7 +162,6 @@ export function Navbar() {
                     Dashboard
                   </Link>
 
-                  {/* My Business dropdown */}
                   <div className="relative group cursor-pointer py-5">
                     <span className="flex items-center gap-1 hover:text-teal-600 transition-colors">
                       My Business
@@ -180,7 +174,6 @@ export function Navbar() {
                     </div>
                   </div>
 
-                  {/* Growth dropdown */}
                   <div className="relative group cursor-pointer py-5">
                     <span className="flex items-center gap-1 hover:text-teal-600 transition-colors">
                       Growth &amp; Analytics
@@ -191,9 +184,21 @@ export function Navbar() {
                       <Link href="/seller/dashboard" className="block px-4 py-2.5 hover:bg-slate-50 hover:text-teal-600 transition-colors">Performance</Link>
                     </div>
                   </div>
+                  
+                  <Link
+                    href={resolvedHelpLink}
+                    className="hover:text-teal-600 transition-colors"
+                  >
+                    Help
+                  </Link>
+                  <Link
+                    href="/contact"
+                    className="hover:text-teal-600 transition-colors"
+                  >
+                    Contact Us
+                  </Link>
                 </nav>
               ) : (
-                /* ── Buyer search bar ── */
                 <form
                   onSubmit={handleSearch}
                   className="hidden md:flex w-full max-w-2xl border border-slate-300 rounded-full overflow-hidden bg-slate-50 hover:bg-white focus-within:bg-white focus-within:border-teal-600 focus-within:ring-2 focus-within:ring-teal-600/20 transition-all h-10 lg:h-[42px]"
@@ -218,11 +223,9 @@ export function Navbar() {
               )}
             </div>
 
-            {/* Right: icons + auth actions */}
             <div className="flex items-center shrink-0">
               <div className="hidden lg:flex items-center gap-5 text-[13px] font-semibold text-slate-600">
 
-                {/* Header Links */}
                 {header?.links?.map((link: any, i: number) => (
                   <Link 
                     key={i}
@@ -233,14 +236,12 @@ export function Navbar() {
                   </Link>
                 ))}
 
-                {/* Country/Currency Selector (buyer only) */}
                 {!isSellerView && (
                   <button className="flex items-center gap-1.5 hover:text-teal-600 transition-colors">
                     <Globe size={16} /> English - INR
                   </button>
                 )}
 
-                {/* Not logged in */}
                 {!user ? (
                   <div className="flex items-center gap-4 border-l border-slate-200 pl-4">
                     <button onClick={() => setLoginOpen(true)} className="hover:text-teal-600 transition-colors">
@@ -254,9 +255,7 @@ export function Navbar() {
                     </button>
                   </div>
                 ) : (
-                  /* Logged in */
                   <div className="flex items-center gap-4 border-l border-slate-200 pl-4">
-                    {/* Notifications */}
                     <button 
                       onClick={() => toast("Notifications will be integrated soon", { icon: "🔔" })}
                       className="text-slate-500 hover:text-teal-600 transition-colors"
@@ -264,7 +263,6 @@ export function Navbar() {
                       <Bell size={20} />
                     </button>
 
-                    {/* Cart */}
                     {!isSellerView && (
                       <Link href="/cart" className="relative text-slate-500 hover:text-teal-600 transition-colors">
                         <ShoppingCart size={20} />
@@ -276,7 +274,6 @@ export function Navbar() {
                       </Link>
                     )}
 
-                    {/* Messages */}
                     <button onClick={() => openChat()} className="relative text-slate-500 hover:text-teal-600 transition-colors">
                       <MessageSquare size={20} />
                       {unreadCount > 0 && (
@@ -286,7 +283,6 @@ export function Navbar() {
                       )}
                     </button>
 
-                    {/* Saved (buyer only) */}
                     {!isSellerView && (
                       <Link href="/wishlist" className="relative text-slate-500 hover:text-teal-600 transition-colors">
                         <Heart size={20} />
@@ -298,7 +294,6 @@ export function Navbar() {
                       </Link>
                     )}
 
-                    {/* Role switch */}
                     {!isAdmin && (
                       !isSellerView ? (
                         <button
@@ -317,7 +312,6 @@ export function Navbar() {
                       )
                     )}
 
-                    {/* Avatar + dropdown */}
                     <div className="relative" ref={userMenuRef}>
                       <button
                         onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -333,13 +327,11 @@ export function Navbar() {
 
                       {userMenuOpen && (
                         <div className="absolute right-0 top-full mt-3 w-64 bg-white border border-slate-200 shadow-2xl rounded-xl py-2 z-50">
-                          {/* User info */}
                           <div className="px-5 py-3 border-b border-slate-100">
                             <p className="font-bold text-sm text-slate-900 truncate">{user.displayName}</p>
                             <p className="text-xs text-slate-500 truncate mt-0.5">{user.email}</p>
                           </div>
 
-                          {/* Menu links */}
                           <div className="py-2">
                             <Link
                               href="/profile"
@@ -357,10 +349,22 @@ export function Navbar() {
                             >
                               <BarChart2 size={15} /> Dashboard
                             </Link>
-                            {/* Removed Admin Panel link since Dashboard now points to it */}
+                            <Link
+                              href={resolvedHelpLink}
+                              onClick={() => setUserMenuOpen(false)}
+                              className="flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors"
+                            >
+                              <HelpCircle size={15} /> Help
+                            </Link>
+                            <Link
+                              href="/contact"
+                              onClick={() => setUserMenuOpen(false)}
+                              className="flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors"
+                            >
+                              <Phone size={15} /> Contact Us
+                            </Link>
                           </div>
 
-                          {/* Sign out */}
                           <div className="border-t border-slate-100 py-2">
                             <button
                               onClick={() => { signOut(); setUserMenuOpen(false); }}
@@ -376,7 +380,6 @@ export function Navbar() {
                 )}
               </div>
 
-              {/* Mobile Icons / Auth actions (shown on top for small screens) */}
               {user ? (
                 <div className="flex lg:hidden items-center gap-4 mr-2">
                   <button onClick={() => openChat()} className="relative text-slate-500 hover:text-teal-600 transition-colors">
@@ -423,7 +426,6 @@ export function Navbar() {
                 </div>
               )}
 
-              {/* Mobile hamburger */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
@@ -435,7 +437,6 @@ export function Navbar() {
 
         </div>
 
-        {/* ── ROW 2 (Buyer only): Category Slider — sits flush below Row 1 ── */}
         {!isSellerView && (
           <div className="hidden lg:block border-t border-slate-100 bg-white">
             <div className="w-full max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
@@ -444,7 +445,6 @@ export function Navbar() {
           </div>
         )}
 
-        {/* ── Mobile dropdown menu ── */}
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-slate-200 bg-white py-4 px-6 space-y-1 max-h-[80vh] overflow-y-auto">
             {!user ? null : (
@@ -457,7 +457,6 @@ export function Navbar() {
                   </div>
                 </div>
                 
-                {/* Mobile Role Switch */}
                 {!isAdmin && (
                   !isSellerView ? (
                     <button
@@ -511,13 +510,19 @@ export function Navbar() {
                       )}
                     </div>
                     
-                    <Link href="/settings" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-bold text-slate-800 py-3 hover:text-teal-600">Settings</Link>
+                    <div className="py-2 border-b border-slate-100/50 space-y-1">
+                      <Link href="/about" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-bold text-slate-800 py-3 hover:text-teal-600 border-b border-slate-50">About</Link>
+                      <Link href={resolvedHelpLink} onClick={() => setMobileMenuOpen(false)} className="block text-sm font-bold text-slate-800 py-3 hover:text-teal-600 border-b border-slate-50">Help</Link>
+                      <Link href="/contact" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-bold text-slate-800 py-3 hover:text-teal-600">Contact</Link>
+                    </div>
                   </>
                 ) : (
                   [
                     { href: dashboardHref, label: "Dashboard" },
                     { href: "/orders",     label: "My Orders" },
                     { href: "/settings",   label: "Settings" },
+                    { href: resolvedHelpLink, label: "Help" },
+                    { href: "/contact",    label: "Contact Us" },
                   ].map(({ href, label }) => (
                     <Link
                       key={label}

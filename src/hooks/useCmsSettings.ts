@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
 export function useCmsSettings<T>(key: string, defaultSettings: T) {
   const { user } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [data, setData] = useState<T>(defaultSettings);
@@ -54,6 +56,7 @@ export function useCmsSettings<T>(key: string, defaultSettings: T) {
       });
       if (res.ok) {
         toast.success("Saved successfully!");
+        router.refresh(); // Invalidate client-side router cache so layout re-fetches
       } else {
         toast.error("Failed to save changes");
       }

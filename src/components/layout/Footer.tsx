@@ -4,8 +4,18 @@ import { useCms } from "../../context/CmsContext";
 
 
 export function Footer() {
-  const { footer } = useCms();
+  const { footer, socials } = useCms();
   const currentYear = new Date().getFullYear();
+
+  // Parse dynamic socials map (handle new array format and legacy object format)
+  let activeSocials: any[] = [];
+  if (socials && Array.isArray(socials.links)) {
+    activeSocials = socials.links.filter((l: any) => Boolean(l.url));
+  } else if (socials && typeof socials === 'object') {
+    activeSocials = Object.entries(socials)
+      .filter(([key, url]) => key !== 'links' && Boolean(url))
+      .map(([platform, url]) => ({ id: platform, url, iconUrl: "", label: platform }));
+  }
 
   return (
     <footer className="bg-white border-t border-[#e4e5e7] mt-auto">
@@ -54,8 +64,8 @@ export function Footer() {
         </div>
 
         {/* Dynamic Columns */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 mb-16 px-4">
-          {footer?.columns?.map((col: any, idx: number) => (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16 px-4">
+          {footer?.columns?.filter((c: any) => c.title && c.title.trim() !== "").map((col: any, idx: number) => (
             <div key={idx}>
               <h4 className="font-bold text-slate-900 mb-6">{col.title}</h4>
               <ul className="space-y-4 text-[#74767e] text-[15px] font-medium">
@@ -69,6 +79,18 @@ export function Footer() {
               </ul>
             </div>
           ))}
+          
+          {/* Static Community Links */}
+          <div>
+            <h4 className="font-bold text-slate-900 mb-6">Community</h4>
+            <ul className="space-y-4 text-[#74767e] text-[15px] font-medium">
+              <li>
+                <Link href="/blog" className="hover:text-teal-600 transition-colors">
+                  Blog
+                </Link>
+              </li>
+            </ul>
+          </div>
         </div>
 
         {/* Bottom Bar */}
@@ -85,18 +107,35 @@ export function Footer() {
           </div>
 
           <div className="flex items-center gap-3 mt-4 md:mt-0">
-            <Link href={footer?.social?.twitter || "#"} className="w-10 h-10 rounded-full bg-[#f4f5f6] flex items-center justify-center text-[#74767e] hover:bg-teal-50 hover:text-teal-600 transition-colors font-semibold text-sm">
-              X
-            </Link>
-            <Link href={footer?.social?.facebook || "#"} className="w-10 h-10 rounded-full bg-[#f4f5f6] flex items-center justify-center text-[#74767e] hover:bg-teal-50 hover:text-teal-600 transition-colors font-semibold text-sm">
-              f
-            </Link>
-            <Link href={footer?.social?.instagram || "#"} className="w-10 h-10 rounded-full bg-[#f4f5f6] flex items-center justify-center text-[#74767e] hover:bg-teal-50 hover:text-teal-600 transition-colors font-semibold text-[13px]">
-              IG
-            </Link>
-            <Link href={footer?.social?.linkedin || "#"} className="w-10 h-10 rounded-full bg-[#f4f5f6] flex items-center justify-center text-[#74767e] hover:bg-teal-50 hover:text-teal-600 transition-colors font-semibold text-sm">
-              in
-            </Link>
+            {activeSocials.map((link) => {
+              // Map platform to standard labels (like the previous design)
+              const labels: Record<string, string> = {
+                twitter: "X",
+                facebook: "f",
+                instagram: "IG",
+                linkedin: "in",
+                youtube: "YT",
+                github: "Git"
+              };
+              
+              const textLabel = link.label?.length <= 3 ? link.label : (labels[link.id] || (link.label || link.id).charAt(0).toUpperCase());
+              
+              return (
+                <Link 
+                  key={link.id}
+                  href={link.url as string} 
+                  target="_blank"
+                  className="w-10 h-10 rounded-full bg-[#f4f5f6] flex items-center justify-center text-[#74767e] hover:bg-teal-50 hover:text-teal-600 transition-colors font-semibold text-[13px] md:text-sm overflow-hidden"
+                  title={link.label || link.id}
+                >
+                  {link.iconUrl ? (
+                    <img src={link.iconUrl} alt={link.label || link.id} className="w-5 h-5 object-contain" />
+                  ) : (
+                    textLabel
+                  )}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>

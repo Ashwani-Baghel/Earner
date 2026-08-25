@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 
 import { Avatar } from "@/components/ui/Avatar";
+import { useCms } from "@/context/CmsContext";
+import { FaqAccordion } from "@/components/ui/FaqAccordion";
 
 interface Gig {
   id: string;
@@ -26,6 +28,8 @@ function BuyerDashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedCategory = searchParams.get("category");
+  const { faqs } = useCms();
+  const buyerFaqs = (faqs?.items || []).filter((f: any) => f.target === "BUYER" || f.target === "BOTH");
 
   const [fetching, setFetching] = useState(true);
 
@@ -36,17 +40,12 @@ function BuyerDashboardContent() {
   useEffect(() => {
     if (loading) return;
     if (!user) { router.push("/"); return; }
-    if (user.hasRole && user.role === "SELLER") { router.push("/seller/dashboard"); return; }
     if (user.role === "ADMIN" || user.role === "SUPER_ADMIN") { router.push("/admin"); return; }
   }, [user, loading, router]);
 
   /* ── Fetch real gigs from DB ── */
   const fetchGigs = async () => {
     if (!user) return;
-    if (user.role === "SELLER") {
-      setFetching(false);
-      return;
-    }
     setFetching(true);
     setError(null);
     try {
@@ -256,7 +255,19 @@ function BuyerDashboardContent() {
             </button>
           </div>
         )}
+        
       </div>
+      
+        {/* ── Dashboard FAQs ── */}
+        {buyerFaqs.length > 0 && (
+          <div className="pt-8 mt-8 border-t border-slate-200">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">Frequently Asked Questions</h2>
+              <p className="text-slate-600">Find quick answers to the most common questions from Buyers.</p>
+            </div>
+            <FaqAccordion faqs={buyerFaqs} />
+          </div>
+        )}
     </div>
   );
 }

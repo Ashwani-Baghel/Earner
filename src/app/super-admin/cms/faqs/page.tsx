@@ -10,7 +10,7 @@ type FAQ = {
   id: string;
   question: string;
   answer: string;
-  target: "BUYER" | "SELLER" | "GENERAL";
+  target: "BUYER" | "SELLER" | "GENERAL" | "BOTH";
 };
 
 const DEFAULT_FAQS = {
@@ -95,9 +95,10 @@ export default function FaqsCMS() {
                     onChange={(e) => updateFaq(faq.id, "target", e.target.value)}
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl bg-slate-50 text-sm font-medium outline-none"
                   >
-                    <option value="GENERAL">General</option>
-                    <option value="BUYER">Buyers Only</option>
-                    <option value="SELLER">Sellers Only</option>
+                    <option value="GENERAL">General / Help Center</option>
+                    <option value="BUYER">Buyer Dashboard</option>
+                    <option value="SELLER">Seller Dashboard</option>
+                    <option value="BOTH">Both Dashboards</option>
                   </select>
                 </div>
               </div>
