@@ -8,22 +8,22 @@ import {
   LayoutDashboard, Users, Briefcase, ShoppingBag,
   Flag, BarChart3, Loader2, ArrowLeft, ChevronRight,
   Shield, Search, Bell, Menu, CreditCard, Settings, X, LogOut, User,
-  Key, ActivitySquare, Monitor, Layout
+  Key, ActivitySquare, Monitor, Layout, LifeBuoy
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { usePermissions } from "@/hooks/usePermissions";
 
 const NAV = [
-  { href: "/super-admin",            label: "Dashboard",       icon: LayoutDashboard, requiredPermission: null },
-  { href: "/super-admin/gigs",       label: "Gig Moderation",  icon: Briefcase, requiredPermission: null },
-  { href: "/super-admin/users",      label: "Users",           icon: Users, requiredPermission: null },
-  { href: "/super-admin/orders",     label: "Orders",          icon: ShoppingBag, requiredPermission: null },
-  { href: "/super-admin/payments",   label: "Payments",        icon: CreditCard, requiredPermission: null },
-  { href: "/super-admin/reports",    label: "Reports",         icon: Flag, requiredPermission: null },
-  { href: "/super-admin/analytics",  label: "Analytics",       icon: BarChart3, requiredPermission: null },
-  { href: "/super-admin/admins",     label: "Admin Management",icon: Shield, requiredPermission: null },
-  { href: "/super-admin/roles",      label: "Roles & Perms",   icon: Key, requiredPermission: null },
-  { href: "/super-admin/audit-logs", label: "Audit Logs",      icon: ActivitySquare, requiredPermission: null },
+  { href: "/super-admin", label: "Dashboard", icon: LayoutDashboard, requiredPermission: null },
+  { href: "/super-admin/gigs", label: "Gig Moderation", icon: Briefcase, requiredPermission: null },
+  { href: "/super-admin/users", label: "Users", icon: Users, requiredPermission: null },
+  { href: "/super-admin/orders", label: "Orders", icon: ShoppingBag, requiredPermission: null },
+  { href: "/super-admin/payments", label: "Payments", icon: CreditCard, requiredPermission: null },
+  { href: "/super-admin/reports", label: "Reports", icon: Flag, requiredPermission: null },
+  { href: "/super-admin/analytics", label: "Analytics", icon: BarChart3, requiredPermission: null },
+  { href: "/super-admin/admins", label: "Admin Management", icon: Shield, requiredPermission: null },
+  { href: "/super-admin/roles", label: "Roles & Perms", icon: Key, requiredPermission: null },
+  { href: "/super-admin/audit-logs", label: "Audit Logs", icon: ActivitySquare, requiredPermission: null },
 ];
 
 const SETTINGS_CATEGORIES = [
@@ -37,6 +37,30 @@ const SETTINGS_CATEGORIES = [
   { id: "legal", label: "Legal" },
   { id: "integrations", label: "Integrations" },
   { id: "system", label: "System" }
+];
+
+const SUPPORT_CATEGORIES = [
+  { id: "overview", label: "Overview" },
+  { id: "live-chat", label: "Live Chat" },
+  { id: "tickets", label: "Tickets" },
+  { 
+    id: "disputes", 
+    label: "Disputes",
+    subCategories: [
+      { id: "overview", label: "Overview" },
+      { id: "all", label: "All Disputes" },
+      { id: "rules", label: "Dispute Rules" },
+      { id: "categories", label: "Dispute Categories" },
+      { id: "reasons", label: "Resolution Reasons" },
+      { id: "agents", label: "Dispute Agents" },
+      { id: "analytics", label: "Analytics" }
+    ]
+  },
+  { id: "agents", label: "Support Agents" },
+  { id: "departments", label: "Departments" },
+  { id: "canned-responses", label: "Canned Responses" },
+  { id: "chat-settings", label: "Chat Settings" },
+  { id: "analytics", label: "Support Analytics" },
 ];
 
 const CMS_CATEGORIES = [
@@ -59,13 +83,15 @@ const CMS_CATEGORIES = [
 
 export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, signOut } = useAuth();
-  const router   = useRouter();
+  const router = useRouter();
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [contentOpen, setContentOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
+  const [disputesOpen, setDisputesOpen] = useState(false);
   const { hasPermission, hasAnyPermission } = usePermissions();
 
   const isLoginPage = pathname === "/admin/login";
@@ -77,6 +103,12 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     }
     if (pathname.startsWith("/super-admin/cms")) {
       setContentOpen(true);
+    }
+    if (pathname.startsWith("/super-admin/support")) {
+      setSupportOpen(true);
+    }
+    if (pathname.startsWith("/super-admin/support/disputes")) {
+      setDisputesOpen(true);
     }
   }, [pathname]);
 
@@ -112,7 +144,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
 
       {/* ── Mobile Sidebar Overlay ── */}
       {mobileMenuOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-slate-900/50 z-40 md:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
@@ -139,7 +171,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
               )}
             </div>
           </Link>
-          <button 
+          <button
             className="md:hidden p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
             onClick={() => setMobileMenuOpen(false)}
           >
@@ -151,19 +183,18 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
         <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
           {NAV.map(({ href, label, icon: Icon, requiredPermission }) => {
             if (requiredPermission && !hasPermission(requiredPermission)) return null;
-            
-            const exact   = href === "/super-admin";
+
+            const exact = href === "/super-admin";
             const isActive = exact ? pathname === href : pathname.startsWith(href);
             return (
               <Link
                 key={href}
                 href={href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all group ${
-                  isActive
-                    ? "bg-teal-50 text-teal-700"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                }`}
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all group ${isActive
+                  ? "bg-teal-50 text-teal-700"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
               >
                 <Icon
                   size={17}
@@ -173,34 +204,65 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
               </Link>
             );
           })}
-          
-          {/* Website Content (CMS) Dropdown */}
-          {hasAnyPermission(["content.manage", "categories.manage"]) && (
-            <div className="pt-2 mt-2 border-t border-slate-100">
-              <button
-                onClick={() => setContentOpen(!contentOpen)}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all group ${
-                  pathname.startsWith("/super-admin/cms")
-                    ? "text-teal-700"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+
+          {/* Support Dropdown */}
+          <div className="pt-2 mt-2 border-t border-slate-100">
+            <button
+              onClick={() => setSupportOpen(!supportOpen)}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all group ${pathname.startsWith("/super-admin/support")
+                ? "text-teal-700"
+                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                 }`}
-              >
-              <Layout
+            >
+              <LifeBuoy
                 size={17}
-                className={pathname.startsWith("/super-admin/cms") ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"}
+                className={pathname.startsWith("/super-admin/support") ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"}
               />
-              <span className="flex-1 text-left">Website Content</span>
-              <ChevronRight size={16} className={`text-slate-400 transition-transform ${contentOpen ? 'rotate-90' : ''}`} />
+              <span className="flex-1 text-left">Support</span>
+              <ChevronRight size={16} className={`text-slate-400 transition-transform ${supportOpen ? 'rotate-90' : ''}`} />
             </button>
-            {contentOpen && (
+            {supportOpen && (
               <div className="mt-1 ml-4 pl-4 border-l-2 border-slate-100 flex flex-col gap-1">
-                {CMS_CATEGORIES.map(cat => {
-                  const href = `/super-admin/cms/${cat.id}`;
+                {SUPPORT_CATEGORIES.map(cat => {
+                  if (cat.subCategories) {
+                    return (
+                      <div key={cat.id} className="flex flex-col gap-1">
+                        <button 
+                          onClick={() => setDisputesOpen(!disputesOpen)}
+                          className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl transition-colors ${
+                            pathname.startsWith(`/super-admin/support/${cat.id}`) ? 'text-teal-700 font-bold bg-teal-50/50' : 'text-slate-600 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span>{cat.label}</span>
+                          <ChevronRight size={14} className={`text-slate-400 transition-transform ${disputesOpen ? 'rotate-90' : ''}`} />
+                        </button>
+                        {disputesOpen && (
+                          <div className="ml-3 pl-3 border-l-2 border-slate-100 flex flex-col gap-1 mt-1">
+                            {cat.subCategories.map(sub => {
+                              const href = `/super-admin/support/${cat.id}/${sub.id}`;
+                              const isActive = pathname === href;
+                              return (
+                                <Link 
+                                  key={sub.id} 
+                                  href={href} 
+                                  className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${isActive ? 'bg-teal-50 text-teal-700 font-bold' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+                                >
+                                  {sub.label}
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  const href = `/super-admin/support/${cat.id}`;
                   const isActive = pathname === href;
                   return (
-                    <Link 
-                      key={cat.id} 
-                      href={href} 
+                    <Link
+                      key={cat.id}
+                      href={href}
                       className={`px-3 py-2 text-sm rounded-xl transition-colors ${isActive ? 'bg-teal-50 text-teal-700 font-bold' : 'text-slate-600 hover:bg-slate-100'}`}
                     >
                       {cat.label}
@@ -210,10 +272,46 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
               </div>
             )}
           </div>
+
+          {/* Website Content (CMS) Dropdown */}
+          {hasAnyPermission(["content.manage", "categories.manage"]) && (
+            <div className="pt-2 mt-2 border-t border-slate-100">
+              <button
+                onClick={() => setContentOpen(!contentOpen)}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all group ${pathname.startsWith("/super-admin/cms")
+                  ? "text-teal-700"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
+              >
+                <Layout
+                  size={17}
+                  className={pathname.startsWith("/super-admin/cms") ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"}
+                />
+                <span className="flex-1 text-left">Website Content</span>
+                <ChevronRight size={16} className={`text-slate-400 transition-transform ${contentOpen ? 'rotate-90' : ''}`} />
+              </button>
+              {contentOpen && (
+                <div className="mt-1 ml-4 pl-4 border-l-2 border-slate-100 flex flex-col gap-1">
+                  {CMS_CATEGORIES.map(cat => {
+                    const href = `/super-admin/cms/${cat.id}`;
+                    const isActive = pathname === href;
+                    return (
+                      <Link
+                        key={cat.id}
+                        href={href}
+                        className={`px-3 py-2 text-sm rounded-xl transition-colors ${isActive ? 'bg-teal-50 text-teal-700 font-bold' : 'text-slate-600 hover:bg-slate-100'}`}
+                      >
+                        {cat.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           )}
 
           <div className="pt-4 border-t border-slate-200 mt-4">
-            <Link 
+            <Link
               href="/admin"
               className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 group"
             >
@@ -229,11 +327,10 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
             <Link
               href="/super-admin/settings/general"
               onClick={() => setMobileMenuOpen(false)}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all group ${
-                pathname.startsWith("/super-admin/settings")
-                  ? "bg-teal-50 text-teal-700"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-              }`}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all group ${pathname.startsWith("/super-admin/settings")
+                ? "bg-teal-50 text-teal-700"
+                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                }`}
             >
               <Settings
                 size={17}
@@ -246,18 +343,17 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
 
         {/* Footer */}
         <div className="p-3 border-t border-slate-200 relative">
-          <button 
+          <button
             onClick={() => setUserMenuOpen(!userMenuOpen)}
             className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-between"
           >
             <div className="min-w-0 pr-2">
               <p className="text-xs font-bold text-slate-800 truncate">{user?.displayName}</p>
               <p className="text-xs text-slate-400 truncate">{user?.email}</p>
-              <span className={`inline-block mt-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full ${
-                user?.role === "SUPER_ADMIN"
-                  ? "bg-purple-100 text-purple-700"
-                  : "bg-teal-100 text-teal-700"
-              }`}>
+              <span className={`inline-block mt-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full ${user?.role === "SUPER_ADMIN"
+                ? "bg-purple-100 text-purple-700"
+                : "bg-teal-100 text-teal-700"
+                }`}>
                 {user?.role}
               </span>
             </div>
@@ -295,11 +391,11 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
 
       {/* ── Main Area ── */}
       <div className="flex-1 flex flex-col min-w-0 bg-slate-50">
-        
+
         {/* ── Top Navbar ── */}
         <header className="h-[69px] bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 flex-shrink-0 z-10">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={() => setMobileMenuOpen(true)}
               className="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
             >
@@ -314,15 +410,15 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
               />
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3 sm:gap-5">
             <button className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors">
               <Bell size={20} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
             </button>
-            
+
             <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
-            
+
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-bold text-slate-700 leading-none">{user?.displayName || "Admin"}</p>

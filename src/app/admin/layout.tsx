@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, Briefcase, ShoppingBag,
   Flag, BarChart3, Loader2, ArrowLeft, ChevronRight,
   Shield, Search, Bell, Menu, CreditCard, Settings, X, LogOut, User,
-  Key, ActivitySquare, Monitor, Layout
+  Key, ActivitySquare, Monitor, Layout, LifeBuoy
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -21,6 +21,7 @@ const NAV = [
   { href: "/admin/payments",   label: "Payments",       icon: CreditCard, requiredPermission: "payments.view" },
   { href: "/admin/reports",    label: "Reports",        icon: Flag, requiredPermission: null },
   { href: "/admin/analytics",  label: "Analytics",      icon: BarChart3, requiredPermission: "analytics.view" },
+  { href: "/admin/support",    label: "Support",        icon: LifeBuoy, requiredPermission: null },
 ];
 
 const SETTINGS_CATEGORIES = [

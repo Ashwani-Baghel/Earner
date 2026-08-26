@@ -51,12 +51,16 @@ export default function HelpCenterPage() {
           </div>
 
           <div className="bg-white rounded-2xl p-8 shadow-lg shadow-slate-200/50 border border-slate-100 flex flex-col items-center text-center hover:-translate-y-1 transition-transform">
-            <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 mb-4">
+            <div className="w-16 h-16 bg-teal-50 rounded-full flex items-center justify-center text-teal-600 mb-4">
               <MessageCircle size={28} />
             </div>
             <h3 className="text-xl font-bold text-slate-900 mb-2">Contact Support</h3>
             <p className="text-slate-500 mb-6 flex-grow">Can't find what you're looking for? Our team is here to help 24/7.</p>
-            <button className="text-indigo-600 font-bold hover:underline">Submit a Ticket &rarr;</button>
+            <Link href="/contact" className="w-full">
+              <button className="w-full bg-teal-700 hover:bg-teal-800 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200">
+                Send Message
+              </button>
+            </Link>
           </div>
         </div>
       </div>
