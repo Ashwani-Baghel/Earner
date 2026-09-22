@@ -1,17 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { 
-  LifeBuoy, Search, Filter, MessageSquare, CheckCircle, Clock, 
-  AlertCircle, X, UserPlus, ArrowUpRight, RefreshCcw, AlertTriangle, 
-  User, Send, Paperclip, MoreHorizontal, Tag, Link as LinkIcon, 
+import { useState, useEffect } from "react";
+import {
+  LifeBuoy, Search, Filter, MessageSquare, CheckCircle, Clock,
+  AlertCircle, X, UserPlus, ArrowUpRight, RefreshCcw, AlertTriangle,
+  User, Send, Paperclip, MoreHorizontal, Tag, Link as LinkIcon,
   Archive, FileText, Activity, GitMerge, FileLock2, ShieldAlert
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
+import { useAuth } from "@/context/AuthContext";
 
 type TicketStatus = "OPEN" | "PENDING" | "RESOLVED" | "CLOSED";
 type TicketPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
-type Department = "General Inquiry" | "Billing" | "Technical Support" | "Partnership Opportunity" | "Trust & Safety";
+type Department = "General Support" | "Orders" | "Technical" | "Seller Support" | "Disputes" | "Billing & Payments" | "Trust & Safety" | string;
 type TabView = "conversation" | "details" | "history";
 type ComposerMode = "reply" | "note";
 
@@ -29,80 +30,134 @@ interface Ticket {
   assignedTo: string | null;
   tags: string[];
   linkedEntities: { type: "Order" | "User" | "Payment" | "Dispute", id: string }[];
-  messages: { id: string; sender: "user" | "agent" | "system" | "note"; text: string; time: string; author?: string }[];
+  messages: { id: string; sender: "user" | "agent" | "system" | "note"; text: string; time: string; author?: string; attachments?: string[] }[];
   history: { id: string; action: string; user: string; time: string }[];
   isArchived: boolean;
+  updatedAt: string;
 }
 
-const MOCK_TICKETS: Ticket[] = [
-  {
-    id: "TKT-1049",
-    subject: "Payment not going through",
-    customer: "Sarah Jenkins",
-    email: "sarah.j@example.com",
-    avatar: "https://i.pravatar.cc/150?u=sarah",
-    status: "OPEN",
-    priority: "HIGH",
-    department: "Billing",
-    time: "10 mins ago",
-    category: "Payment Issue",
-    assignedTo: null,
-    tags: ["billing", "urgent"],
-    linkedEntities: [{ type: "Payment", id: "PAY-9923" }],
-    isArchived: false,
-    messages: [
-      { id: "m1", sender: "user", text: "I tried to pay for a gig but my card keeps getting declined. I've tried twice.", time: "10 mins ago", author: "Sarah Jenkins" }
-    ],
-    history: [
-      { id: "h1", action: "Ticket Created", user: "System", time: "10 mins ago" }
-    ]
-  },
-  {
-    id: "TKT-1048",
-    subject: "How do I upgrade to Premium?",
-    customer: "Michael Chang",
-    email: "mike.c@example.com",
-    avatar: "https://i.pravatar.cc/150?u=mike",
-    status: "PENDING",
-    priority: "MEDIUM",
-    department: "General Inquiry",
-    time: "2 hours ago",
-    category: "Account Management",
-    assignedTo: "Agent Sarah",
-    tags: ["upgrade", "question"],
-    linkedEntities: [{ type: "User", id: "USR-402" }],
-    isArchived: false,
-    messages: [
-      { id: "m1", sender: "user", text: "Where can I find the premium upgrade option?", time: "2 hours ago", author: "Michael Chang" },
-      { id: "m2", sender: "agent", text: "Hi Michael! You can upgrade from your Account Settings page. Let me know if you need a direct link.", time: "1 hour ago", author: "Agent Sarah" },
-      { id: "m3", sender: "note", text: "Customer might need manual upgrade link if they are on the old UI.", time: "55 mins ago", author: "Agent Sarah" }
-    ],
-    history: [
-      { id: "h1", action: "Ticket Created", user: "System", time: "2 hours ago" },
-      { id: "h2", action: "Assigned to Agent Sarah", user: "System", time: "1 hour ago" },
-      { id: "h3", action: "Status changed to PENDING", user: "Agent Sarah", time: "1 hour ago" }
-    ]
-  },
-];
-
-const AGENTS = ["Agent Sarah", "Agent Mike", "Tech Lead Mark", "Super Admin"];
-const DEPARTMENTS: Department[] = ["General Inquiry", "Billing", "Technical Support", "Partnership Opportunity", "Trust & Safety"];
+const DEPARTMENTS: Department[] = ["General Support", "Orders", "Technical", "Seller Support", "Disputes", "Billing & Payments", "Trust & Safety"];
 
 export function TicketManager() {
-  const [tickets, setTickets] = useState<Ticket[]>(MOCK_TICKETS);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<TabView>("conversation");
   const [composerMode, setComposerMode] = useState<ComposerMode>("reply");
   const [replyText, setReplyText] = useState("");
   const [newTag, setNewTag] = useState("");
+  const [filterTab, setFilterTab] = useState("All Tickets");
+  const [agentsList, setAgentsList] = useState<{name: string, department: string}[]>([]);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchTickets = async () => {
+      if (!user) return;
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch("/api/admin/tickets", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.tickets) {
+          setTickets(prevTickets => data.tickets.map((t: any) => {
+            const existing = prevTickets.find(p => p.id === t.id);
+            return {
+              id: t.id,
+              subject: t.subject,
+              customer: t.user?.name || "Unknown User",
+              email: t.user?.email || "",
+              avatar: t.user?.avatar || "https://i.pravatar.cc/150",
+              status: t.status,
+              priority: t.priority,
+              department: t.department,
+              time: new Date(t.createdAt).toLocaleDateString(),
+              category: "General",
+              assignedTo: t.assignedTo,
+              tags: t.tags || [],
+              linkedEntities: existing ? existing.linkedEntities : [],
+              messages: existing ? existing.messages : [],
+              history: existing ? existing.history : [],
+              isArchived: t.isArchived,
+              updatedAt: t.updatedAt
+            };
+          }));
+        }
+      } catch (e) {
+        console.error("Failed to fetch tickets", e);
+      }
+    };
+
+    const fetchAgents = async () => {
+      if (!user) return;
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch("/api/admin/users?role=ADMIN", { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        const usersArray = Array.isArray(data) ? data : (data.users || []);
+        const mapped = usersArray.map((u: any) => ({
+          name: u.name || "Unknown",
+          department: u.adminProfile?.department || "General Support",
+        }));
+        setAgentsList(mapped);
+      } catch (e) {
+        console.error("Failed to fetch agents", e);
+      }
+    };
+
+    fetchTickets();
+    fetchAgents();
+
+    // Poll for new tickets every 5 seconds
+    const interval = setInterval(fetchTickets, 5000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const selectedTicket = tickets.find(t => t.id === selectedTicketId);
 
+  // --- FETCH SPECIFIC TICKET DETAILS ON SELECT ---
+  useEffect(() => {
+    if (selectedTicketId && user) {
+      const fetchDetails = async () => {
+        try {
+          const token = await user.getIdToken();
+          const res = await fetch(`/api/tickets/${selectedTicketId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.ticket) {
+            setTickets(prev => prev.map(t => {
+              if (t.id === selectedTicketId) {
+                return {
+                  ...t,
+                  messages: data.ticket.messages.map((m: any) => ({
+                    id: m.id,
+                    sender: m.senderRole === "NOTE" ? "note" : m.senderRole === "USER" ? "user" : "agent",
+                    text: m.message,
+                    time: new Date(m.createdAt).toLocaleTimeString(),
+                    author: m.senderRole === "USER" ? t.customer : "Agent",
+                    attachments: m.attachments || []
+                  }))
+                };
+              }
+              return t;
+            }));
+          }
+        } catch (e) { }
+      };
+      fetchDetails();
+
+      // Poll for ticket details/messages every 5 seconds
+      const interval = setInterval(fetchDetails, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [selectedTicketId, user]);
+
   // --- ACTIONS ---
 
-  const updateTicket = (id: string, updates: Partial<Ticket>, logAction?: string) => {
-    setTickets(tickets.map(t => {
+  const updateTicket = async (id: string, updates: Partial<Ticket>, logAction?: string) => {
+    // Optimistic UI update
+    setTickets(prev => prev.map(t => {
       if (t.id === id) {
         const updated = { ...t, ...updates };
         if (logAction) {
@@ -112,6 +167,22 @@ export function TicketManager() {
       }
       return t;
     }));
+
+    if (!user) return;
+    try {
+      const token = await user.getIdToken();
+      await fetch(`/api/tickets/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(updates)
+      });
+    } catch (e) {
+      console.error("Failed to update ticket", e);
+      // Ideally we would revert the optimistic update here if the request fails
+    }
   };
 
   const handleStatusChange = (id: string, newStatus: TicketStatus) => {
@@ -131,10 +202,10 @@ export function TicketManager() {
   };
 
   const handleEscalate = (id: string) => {
-    setTickets(tickets.map(t => {
+    setTickets(prev => prev.map(t => {
       if (t.id === id) {
-        return { 
-          ...t, 
+        return {
+          ...t,
           priority: "URGENT",
           messages: [...t.messages, { id: Date.now().toString(), sender: "system", text: "Ticket escalated to Tier 2 Support / Super Admin.", time: "Just now" }],
           history: [{ id: Date.now().toString(), action: "Ticket Escalated", user: "Super Admin", time: "Just now" }, ...t.history]
@@ -162,34 +233,67 @@ export function TicketManager() {
     setSelectedTicketId(null); // close drawer
   };
 
-  const handleSendReply = () => {
-    if (!replyText.trim() || !selectedTicketId || !selectedTicket) return;
-    const newMessage = { 
-      id: Date.now().toString(), 
-      sender: composerMode === "note" ? "note" : "agent" as const, 
-      text: replyText, 
-      time: "Just now",
-      author: "Super Admin"
-    };
-    updateTicket(selectedTicketId, { 
-      messages: [...selectedTicket.messages, newMessage] 
-    }, composerMode === "note" ? "Added internal note" : "Replied to customer");
-    setReplyText("");
+  const handleSendReply = async () => {
+    if (!replyText.trim() || !selectedTicketId || !selectedTicket || !user) return;
+
+    const isInternal = composerMode === "note";
+
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/tickets/${selectedTicketId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ message: replyText, isInternal })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        const newMessage = {
+          id: data.message.id,
+          sender: isInternal ? "note" : "agent" as const,
+          text: replyText,
+          time: new Date(data.message.createdAt).toLocaleTimeString(),
+          author: "Super Admin"
+        };
+        updateTicket(selectedTicketId, {
+          messages: [...selectedTicket.messages, newMessage],
+          status: isInternal ? selectedTicket.status : "PENDING"
+        }, isInternal ? "Added internal note" : "Replied to customer");
+        setReplyText("");
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const activeTickets = tickets.filter(t => !t.isArchived && (
-    t.subject.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    t.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.customer.toLowerCase().includes(searchQuery.toLowerCase())
-  ));
+  const activeTickets = tickets.filter(t => {
+    // Text search filter
+    const matchesSearch = t.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.customer.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (!matchesSearch) return false;
+
+    // Tab filter
+    if (filterTab === "All Tickets") return !t.isArchived;
+    if (filterTab === "Active Tickets") return !t.isArchived && t.status !== "CLOSED" && t.status !== "RESOLVED";
+    if (filterTab === "Unassigned") return !t.isArchived && !t.assignedTo;
+    if (filterTab === "Assigned") return !t.isArchived && !!t.assignedTo;
+    if (filterTab === "Archived") return t.isArchived || t.status === "CLOSED" || t.status === "RESOLVED";
+
+    return true;
+  });
 
   return (
     <div className="relative flex h-[calc(100vh-69px)] bg-slate-50 overflow-hidden">
-      
+
       {/* Main Table Area */}
       <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${selectedTicket ? 'pr-[600px] xl:pr-[700px]' : ''}`}>
         <div className="p-6 max-w-7xl mx-auto w-full space-y-6 overflow-y-auto">
-          
+
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -202,7 +306,7 @@ export function TicketManager() {
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <div className="relative flex-1 sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input 
+                <input
                   type="text"
                   placeholder="Search tickets..."
                   value={searchQuery}
@@ -222,17 +326,21 @@ export function TicketManager() {
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">Total Tickets</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1">1,248</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">
+                  {tickets.length.toLocaleString()}
+                </p>
               </div>
               <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                 <MessageSquare size={20} />
               </div>
             </div>
-            
+
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">Open Tickets</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1">24</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">
+                  {tickets.filter(t => t.status === "OPEN").length.toLocaleString()}
+                </p>
               </div>
               <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
                 <Clock size={20} />
@@ -242,7 +350,9 @@ export function TicketManager() {
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">High Priority</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1">5</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">
+                  {tickets.filter(t => t.priority === "HIGH" || t.priority === "URGENT").length.toLocaleString()}
+                </p>
               </div>
               <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600">
                 <AlertCircle size={20} />
@@ -252,7 +362,16 @@ export function TicketManager() {
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">Resolved Today</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1">18</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">
+                  {tickets.filter(t => {
+                    if (t.status !== "RESOLVED" && t.status !== "CLOSED") return false;
+                    const updatedDate = new Date(t.updatedAt);
+                    const today = new Date();
+                    return updatedDate.getDate() === today.getDate() &&
+                      updatedDate.getMonth() === today.getMonth() &&
+                      updatedDate.getFullYear() === today.getFullYear();
+                  }).length.toLocaleString()}
+                </p>
               </div>
               <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
                 <CheckCircle size={20} />
@@ -263,19 +382,24 @@ export function TicketManager() {
           {/* Tickets Table */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="border-b border-slate-200 bg-slate-50/50 px-6 py-4 flex gap-6 overflow-x-auto hide-scrollbar">
-              <button className="text-sm font-semibold text-teal-700 border-b-2 border-teal-600 pb-4 -mb-4 whitespace-nowrap">All Active</button>
-              <button className="text-sm font-medium text-slate-500 hover:text-slate-700 pb-4 -mb-4 whitespace-nowrap">Unassigned</button>
-              <button className="text-sm font-medium text-slate-500 hover:text-slate-700 pb-4 -mb-4 whitespace-nowrap">My Tickets</button>
-              <button className="text-sm font-medium text-slate-500 hover:text-slate-700 pb-4 -mb-4 whitespace-nowrap">Archived</button>
+              {["All Tickets", "Active Tickets", "Unassigned", "Assigned", "Archived"].map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setFilterTab(tab)}
+                  className={`text-sm font-semibold pb-4 -mb-4 whitespace-nowrap transition-colors ${filterTab === tab ? 'text-teal-700 border-b-2 border-teal-600' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  {tab}
+                </button>
+              ))}
             </div>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 bg-slate-50/50">
                     <th className="px-6 py-4 font-semibold">Ticket</th>
                     <th className="px-6 py-4 font-semibold">Requester</th>
-                    <th className="px-6 py-4 font-semibold">Department</th>
+                    <th className="px-6 py-4 font-semibold">Categories</th>
                     <th className="px-6 py-4 font-semibold">Status / Priority</th>
                     <th className="px-6 py-4 font-semibold">Assignee</th>
                     <th className="px-6 py-4 font-semibold text-right">Action</th>
@@ -283,8 +407,8 @@ export function TicketManager() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {activeTickets.map((ticket) => (
-                    <tr 
-                      key={ticket.id} 
+                    <tr
+                      key={ticket.id}
                       onClick={() => { setSelectedTicketId(ticket.id); setActiveTab("conversation"); }}
                       className={`hover:bg-slate-50 transition-colors group cursor-pointer ${selectedTicketId === ticket.id ? 'bg-teal-50/30' : ''}`}
                     >
@@ -319,14 +443,23 @@ export function TicketManager() {
                       </td>
                       <td className="px-6 py-4">
                         {ticket.assignedTo ? (
-                          <div className="flex items-center gap-1.5 text-sm text-slate-700 font-medium">
-                            <div className="w-6 h-6 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-[10px] font-bold">
-                              {ticket.assignedTo.charAt(0)}
+                          <div className="flex flex-col items-start gap-1">
+                            <span className="text-[10px] font-bold text-teal-700 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded w-fit uppercase tracking-wider">
+                              Assigned
+                            </span>
+                            <div className="flex items-center gap-1.5 text-sm text-slate-800 font-bold">
+                              <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[9px] font-black uppercase">
+                                {ticket.assignedTo.charAt(0)}
+                              </div>
+                              {ticket.assignedTo}
                             </div>
-                            {ticket.assignedTo}
                           </div>
                         ) : (
-                          <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">Unassigned</span>
+                          <div className="flex flex-col items-start gap-1">
+                            <span className="text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded w-fit uppercase tracking-wider">
+                              Unassigned
+                            </span>
+                          </div>
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -353,10 +486,9 @@ export function TicketManager() {
       </div>
 
       {/* Right Drawer (Pro Ticket Details) */}
-      <div 
-        className={`absolute top-0 right-0 h-full w-[600px] xl:w-[700px] bg-white border-l border-slate-200 shadow-2xl transition-transform duration-300 flex flex-col z-20 ${
-          selectedTicket ? 'translate-x-0' : 'translate-x-full'
-        }`}
+      <div
+        className={`absolute top-0 right-0 h-full w-[600px] xl:w-[700px] bg-white border-l border-slate-200 shadow-2xl transition-transform duration-300 flex flex-col z-20 ${selectedTicket ? 'translate-x-0' : 'translate-x-full'
+          }`}
       >
         {selectedTicket && (
           <>
@@ -380,48 +512,53 @@ export function TicketManager() {
                   <p className="text-sm font-bold text-slate-700">{selectedTicket.subject}</p>
                 </div>
                 <div className="flex items-center gap-1">
-                  <button onClick={() => handleArchive(selectedTicket.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors tooltip-trigger" title="Archive / Delete">
+                  <button onClick={() => handleArchive(selectedTicket.id)} className="group relative p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                     <Archive size={18} />
+                    <span className="absolute top-full mt-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900 text-white text-[11px] font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-sm">Archive / Delete</span>
                   </button>
-                  <button onClick={() => handleEscalate(selectedTicket.id)} className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="Escalate Ticket">
+                  <button onClick={() => handleEscalate(selectedTicket.id)} className="group relative p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors">
                     <ShieldAlert size={18} />
+                    <span className="absolute top-full mt-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900 text-white text-[11px] font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-sm">Escalate Ticket</span>
                   </button>
-                  <button onClick={() => {}} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-lg transition-colors" title="Merge Ticket">
+                  <button onClick={() => { }} className="group relative p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-lg transition-colors">
                     <GitMerge size={18} />
+                    <span className="absolute top-full mt-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900 text-white text-[11px] font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-sm">Merge Ticket</span>
                   </button>
-                  <button 
-                    onClick={() => handleStatusChange(selectedTicket.id, selectedTicket.status === 'CLOSED' ? 'OPEN' : 'CLOSED')} 
-                    className={`p-2 rounded-lg transition-colors ${
-                      selectedTicket.status === 'CLOSED' 
-                        ? 'text-amber-500 hover:bg-amber-50 hover:text-amber-700' 
+                  <button
+                    onClick={() => handleStatusChange(selectedTicket.id, selectedTicket.status === 'CLOSED' ? 'OPEN' : 'CLOSED')}
+                    className={`group relative p-2 rounded-lg transition-colors ${selectedTicket.status === 'CLOSED'
+                        ? 'text-amber-500 hover:bg-amber-50 hover:text-amber-700'
                         : 'text-emerald-500 hover:bg-emerald-50 hover:text-emerald-700'
-                    }`} 
-                    title={selectedTicket.status === 'CLOSED' ? "Reopen Ticket" : "Close Ticket"}
+                      }`}
                   >
                     {selectedTicket.status === 'CLOSED' ? <RefreshCcw size={18} /> : <CheckCircle size={18} />}
+                    <span className="absolute top-full mt-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900 text-white text-[11px] font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-sm">
+                      {selectedTicket.status === 'CLOSED' ? "Reopen Ticket" : "Close Ticket"}
+                    </span>
                   </button>
                   <div className="w-px h-6 bg-slate-200 mx-1"></div>
-                  <button onClick={() => setSelectedTicketId(null)} className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-200 rounded-full transition-colors ml-1">
+                  <button onClick={() => setSelectedTicketId(null)} className="group relative p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-200 rounded-full transition-colors ml-1">
                     <X size={20} />
+                    <span className="absolute top-full mt-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900 text-white text-[11px] font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-sm">Close Drawer</span>
                   </button>
                 </div>
               </div>
-              
+
               {/* Drawer Tabs */}
               <div className="flex gap-1 mt-2 bg-slate-200/50 p-1 rounded-xl w-fit">
-                <button 
+                <button
                   onClick={() => setActiveTab("conversation")}
                   className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'conversation' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                   Conversation
                 </button>
-                <button 
+                <button
                   onClick={() => setActiveTab("details")}
                   className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'details' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                   Ticket Details
                 </button>
-                <button 
+                <button
                   onClick={() => setActiveTab("history")}
                   className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'history' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                 >
@@ -432,7 +569,7 @@ export function TicketManager() {
 
             {/* Content Area */}
             <div className="flex-1 overflow-y-auto bg-white flex flex-col">
-              
+
               {/* ----------------- CONVERSATION TAB ----------------- */}
               {activeTab === "conversation" && (
                 <>
@@ -456,9 +593,8 @@ export function TicketManager() {
                             </div>
                           </div>
                         ) : (
-                          <div className={`max-w-[85%] rounded-2xl shadow-sm overflow-hidden ${
-                            msg.sender === 'user' ? 'bg-slate-50 border border-slate-200' : 'bg-teal-700 text-white'
-                          }`}>
+                          <div className={`max-w-[85%] rounded-2xl shadow-sm overflow-hidden ${msg.sender === 'user' ? 'bg-slate-50 border border-slate-200' : 'bg-teal-700 text-white'
+                            }`}>
                             <div className={`px-4 py-2 flex items-center gap-2 border-b ${msg.sender === 'user' ? 'border-slate-200 bg-white' : 'border-teal-600 bg-teal-800'}`}>
                               {msg.sender === 'user' ? <Avatar src={selectedTicket.avatar} alt="User" size="sm" /> : <div className="w-6 h-6 rounded-full bg-teal-600 flex items-center justify-center"><ShieldAlert size={12} className="text-white" /></div>}
                               <span className={`text-xs font-bold ${msg.sender === 'user' ? 'text-slate-900' : 'text-teal-50'}`}>{msg.author}</span>
@@ -466,6 +602,15 @@ export function TicketManager() {
                             </div>
                             <div className="px-5 py-4">
                               <p className={`text-sm leading-relaxed ${msg.sender === 'user' ? 'text-slate-800' : 'text-white'}`}>{msg.text}</p>
+                              {msg.attachments && msg.attachments.length > 0 && (
+                                <div className="mt-3 flex gap-2 flex-wrap">
+                                  {msg.attachments.map((url: string, i: number) => (
+                                    <a key={i} href={url} target="_blank" rel="noreferrer" className={`text-xs flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-colors ${msg.sender === 'user' ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-teal-700/50 hover:bg-teal-700 text-white border border-teal-600/30'}`}>
+                                      <FileText size={12} /> Attachment {i + 1}
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
@@ -477,13 +622,13 @@ export function TicketManager() {
                   <div className="p-4 bg-slate-50 border-t border-slate-200 shrink-0">
                     <div className="max-w-4xl mx-auto rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-white focus-within:border-teal-500 focus-within:ring-1 focus-within:ring-teal-500 transition-all">
                       <div className="flex border-b border-slate-100 bg-slate-50/50">
-                        <button 
+                        <button
                           onClick={() => setComposerMode("reply")}
                           className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${composerMode === 'reply' ? 'bg-white text-teal-700 border-b-2 border-teal-600' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
                         >
                           Reply to Customer
                         </button>
-                        <button 
+                        <button
                           onClick={() => setComposerMode("note")}
                           className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${composerMode === 'note' ? 'bg-[#FFF9C4] text-[#F57F17] border-b-2 border-[#FBC02D]' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
                         >
@@ -491,26 +636,33 @@ export function TicketManager() {
                         </button>
                       </div>
                       <div className={`p-3 ${composerMode === 'note' ? 'bg-[#FFFDE7]' : 'bg-white'}`}>
-                        <textarea 
+                        <textarea
                           value={replyText}
                           onChange={(e) => setReplyText(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSendReply();
+                            }
+                          }}
                           placeholder={composerMode === 'reply' ? "Type a message to the customer..." : "Type a private note visible only to admins..."}
                           className="w-full bg-transparent border-none focus:ring-0 resize-none text-sm text-slate-900 min-h-[80px]"
                         />
                         <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-100">
                           <div className="flex gap-1">
-                            <button className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors" title="Attach File">
+                            <button className="group relative p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
                               <Paperclip size={18} />
+                              <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900 text-white text-[11px] font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-sm">Attach File</span>
                             </button>
-                            <button className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors" title="Canned Response">
+                            <button className="group relative p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
                               <FileText size={18} />
+                              <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900 text-white text-[11px] font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-sm">Canned Response</span>
                             </button>
                           </div>
-                          <button 
+                          <button
                             onClick={handleSendReply}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold text-white shadow-sm transition-colors ${
-                              composerMode === 'reply' ? 'bg-teal-600 hover:bg-teal-700' : 'bg-[#FBC02D] hover:bg-[#F9A825] text-yellow-900'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold text-white shadow-sm transition-colors ${composerMode === 'reply' ? 'bg-teal-600 hover:bg-teal-700' : 'bg-[#FBC02D] hover:bg-[#F9A825] text-yellow-900'
+                              }`}
                           >
                             <Send size={16} />
                             {composerMode === 'reply' ? 'Send Reply' : 'Add Note'}
@@ -542,7 +694,7 @@ export function TicketManager() {
                   <div className="grid grid-cols-2 gap-6">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Status</label>
-                      <select 
+                      <select
                         value={selectedTicket.status}
                         onChange={(e) => handleStatusChange(selectedTicket.id, e.target.value as TicketStatus)}
                         className="w-full text-sm font-semibold text-slate-800 py-2.5 px-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 shadow-sm"
@@ -555,7 +707,7 @@ export function TicketManager() {
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Priority</label>
-                      <select 
+                      <select
                         value={selectedTicket.priority}
                         onChange={(e) => handlePriorityChange(selectedTicket.id, e.target.value as TicketPriority)}
                         className="w-full text-sm font-semibold text-slate-800 py-2.5 px-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 shadow-sm"
@@ -568,7 +720,7 @@ export function TicketManager() {
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Department</label>
-                      <select 
+                      <select
                         value={selectedTicket.department}
                         onChange={(e) => handleDepartmentChange(selectedTicket.id, e.target.value as Department)}
                         className="w-full text-sm font-semibold text-slate-800 py-2.5 px-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 shadow-sm"
@@ -578,13 +730,17 @@ export function TicketManager() {
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Assignee</label>
-                      <select 
+                      <select
                         value={selectedTicket.assignedTo || ""}
                         onChange={(e) => handleAssign(selectedTicket.id, e.target.value)}
                         className="w-full text-sm font-semibold text-slate-800 py-2.5 px-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 shadow-sm"
                       >
                         <option value="">Unassigned</option>
-                        {AGENTS.map(agent => <option key={agent} value={agent}>{agent}</option>)}
+                        {agentsList
+                          .filter(agent => agent.department === selectedTicket.department || agent.name === selectedTicket.assignedTo)
+                          .map((agent, index) => (
+                            <option key={`${agent.name}-${index}`} value={agent.name}>{agent.name}</option>
+                          ))}
                       </select>
                     </div>
                   </div>
@@ -599,14 +755,14 @@ export function TicketManager() {
                         {selectedTicket.tags.map(tag => (
                           <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg border border-slate-200">
                             #{tag}
-                            <button onClick={() => handleRemoveTag(selectedTicket.id, tag)} className="hover:text-red-500 transition-colors ml-1"><X size={12}/></button>
+                            <button onClick={() => handleRemoveTag(selectedTicket.id, tag)} className="hover:text-red-500 transition-colors ml-1"><X size={12} /></button>
                           </span>
                         ))}
                       </div>
                       <div className="flex gap-2">
-                        <input 
-                          type="text" 
-                          placeholder="Add tag..." 
+                        <input
+                          type="text"
+                          placeholder="Add tag..."
                           value={newTag}
                           onChange={(e) => setNewTag(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && handleAddTag(selectedTicket.id)}
@@ -615,7 +771,7 @@ export function TicketManager() {
                         <button onClick={() => handleAddTag(selectedTicket.id)} className="px-3 py-1.5 bg-slate-800 text-white text-xs font-bold rounded-lg hover:bg-slate-900 transition-colors">Add</button>
                       </div>
                     </div>
-                    
+
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1"><LinkIcon size={14} /> Linked Entities</label>
                       <div className="space-y-2">
@@ -634,7 +790,7 @@ export function TicketManager() {
                       </div>
                     </div>
                   </div>
-                  
+
                 </div>
               )}
 

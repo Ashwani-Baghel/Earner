@@ -1,6 +1,7 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
+import { getStorage, FirebaseStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -18,14 +19,16 @@ export const isFirebaseConfigured =
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
+let storage: FirebaseStorage | null = null;
 let googleProvider: GoogleAuthProvider | null = null;
 
 if (isFirebaseConfigured && typeof window !== "undefined") {
   app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
   auth = getAuth(app);
   db = getFirestore(app);
+  storage = getStorage(app);
   googleProvider = new GoogleAuthProvider();
   googleProvider.setCustomParameters({ prompt: "select_account" });
 }
 
-export { app, auth, db, googleProvider };
+export { app, auth, db, storage, googleProvider };

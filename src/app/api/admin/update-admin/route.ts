@@ -9,7 +9,7 @@ export async function PATCH(req: NextRequest) {
       throw new ApiError(403, "Only SUPER_ADMIN can edit admin profiles.");
     }
 
-    const { userId, name, roleId, permissionIds } = await req.json();
+    const { userId, name, roleId, permissionIds, isActive, department } = await req.json();
     if (!userId) {
       throw new ApiError(400, "userId is required");
     }
@@ -32,7 +32,8 @@ export async function PATCH(req: NextRequest) {
       where: { userId },
       create: {
         user: { connect: { id: userId } },
-        isActive: true,
+        isActive: isActive !== undefined ? isActive : true,
+        ...(department !== undefined ? { department } : {}),
         ...(roleId ? { role: { connect: { id: roleId } } } : {}),
         permissions: {
           create: (permissionIds || []).map((pId: string) => ({
@@ -41,6 +42,8 @@ export async function PATCH(req: NextRequest) {
         }
       },
       update: {
+        ...(isActive !== undefined ? { isActive } : {}),
+        ...(department !== undefined ? { department } : {}),
         ...(roleId ? { role: { connect: { id: roleId } } } : { role: { disconnect: true } }),
         permissions: {
           deleteMany: {},

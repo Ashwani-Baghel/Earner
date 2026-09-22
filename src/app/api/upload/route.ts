@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { writeFile, mkdir } from "fs/promises";
+import { join } from "path";
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,14 +13,22 @@ export async function POST(req: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     
-    // Convert directly to a Base64 Data URI
-    const mimeType = file.type || "image/jpeg";
-    const base64String = buffer.toString("base64");
-    const dataUri = `data:${mimeType};base64,${base64String}`;
+    // Save to local filesystem
+    const uploadsDir = join(process.cwd(), "public", "uploads");
+    try {
+      await mkdir(uploadsDir, { recursive: true });
+    } catch (e) {
+      // Ignore if exists
+    }
+
+    const uniqueName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const path = join(uploadsDir, uniqueName);
+    
+    await writeFile(path, buffer);
 
     return NextResponse.json({ 
       success: true, 
-      url: dataUri
+      url: `/uploads/${uniqueName}`
     });
   } catch (error: any) {
     console.error("Error occurred while saving the file:", error);

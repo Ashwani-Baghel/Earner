@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     if (!requester || requester.role !== "SUPER_ADMIN") {
       return NextResponse.json({ error: "Forbidden: Super Admin access required" }, { status: 403 });
     }
-    const { email, password, name, permissionIds, roleId } = await req.json();
+    const { email, password, name, permissionIds, roleId, department } = await req.json();
 
     if (!email || !password || password.length < 6) {
       return NextResponse.json(
@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
           adminProfile: {
             create: {
               isActive: true,
+              ...(department ? { department } : {}),
               ...(roleId ? { role: { connect: { id: roleId } } } : {}),
               permissions: {
                 create: (permissionIds || []).map((pId: string) => ({

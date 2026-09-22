@@ -19,7 +19,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
 
 // Prisma v7 singleton with PrismaPg adapter
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+const globalForPrisma = globalThis as unknown as { prisma_v6: PrismaClient };
 
 function createPrismaClient(): PrismaClient {
   const url = process.env.DATABASE_URL;
@@ -42,10 +42,10 @@ function createPrismaClient(): PrismaClient {
 }
 
 export const prisma: PrismaClient =
-  (globalForPrisma.prisma && "category" in globalForPrisma.prisma)
-    ? globalForPrisma.prisma
+  (globalForPrisma.prisma_v6)
+    ? globalForPrisma.prisma_v6
     : createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+  globalForPrisma.prisma_v6 = prisma;
 }

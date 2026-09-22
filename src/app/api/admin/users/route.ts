@@ -40,6 +40,8 @@ export async function GET(req: NextRequest) {
         adminProfile: {
           select: {
             roleId: true,
+            isActive: true,
+            department: true,
             permissions: {
               select: {
                 permission: {

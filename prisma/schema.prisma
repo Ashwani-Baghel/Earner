@@ -80,6 +80,8 @@ model User {
   reportsGiven  Report[]       @relation("ReportsByUser")
   cartItems     CartItem[]
   adminProfile  AdminProfile?
+  supportTickets SupportTicket[]
+  liveChatSessions LiveChatSession[]
 }
 
 // ─── Seller Profile ───────────────────────────────────────────────────────────
@@ -356,6 +358,7 @@ model AdminProfile {
   user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   roleId      String?
   role        AdminRole?        @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  department  String?           @default("General Support")
   isActive    Boolean           @default(true)
   lastLogin   DateTime?
   permissions AdminPermission[]
@@ -444,4 +447,87 @@ model Blog {
   ogImage         String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+}
+
+// ─── Contact Submissions ──────────────────────────────────────────────────────
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  subject   String
+  name      String
+  email     String
+  message   String   @db.Text
+  status         String   @default("UNREAD") // UNREAD | READ | REPLIED
+  userHasUnread  Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+  assignedTo     String?
+  department     String?
+  priority       String   @default("Medium") // Low | Medium | High | Urgent
+  replies   ContactMessageReply[]
+}
+
+model ContactMessageReply {
+  id          String         @id @default(cuid())
+  inquiryId   String
+  inquiry     ContactMessage @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  senderId    String         // User ID or "SYSTEM" or "AGENT"
+  senderRole  String         @default("USER") // USER | AGENT | SYSTEM | NOTE
+  message     String         @db.Text
+  attachments String[]       @default([])
+  isInternal  Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+}
+
+// ─── Support Tickets ──────────────────────────────────────────────────────────
+
+model SupportTicket {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject     String
+  department  String   // "General Inquiry" | "Billing" | "Technical Support" | "Trust & Safety"
+  status      String   @default("OPEN") // OPEN | PENDING | RESOLVED | CLOSED
+  priority    String   @default("MEDIUM") // LOW | MEDIUM | HIGH | URGENT
+  assignedTo    String?
+  tags          String[]
+  messages      SupportTicketMessage[]
+  isArchived    Boolean  @default(false)
+  userHasUnread Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SupportTicketMessage {
+  id          String        @id @default(cuid())
+  ticketId    String
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderId    String        // User ID or "SYSTEM"
+  senderRole  String        @default("USER") // USER | AGENT | SYSTEM | NOTE
+  message     String        @db.Text
+  attachments String[]      @default([]) // URLs to uploaded images/proofs
+  isInternal  Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+}
+
+// ─── Live Chat ────────────────────────────────────────────────────────────────
+
+model LiveChatSession {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentId     String?
+  status      String   @default("WAITING") // WAITING | ACTIVE | CLOSED
+  startedAt   DateTime @default(now())
+  endedAt     DateTime?
+  messages    LiveChatMessage[]
+}
+
+model LiveChatMessage {
+  id          String          @id @default(cuid())
+  sessionId   String
+  session     LiveChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  senderId    String          // User ID or Agent ID or "SYSTEM"
+  message     String          @db.Text
+  createdAt   DateTime        @default(now())
 }

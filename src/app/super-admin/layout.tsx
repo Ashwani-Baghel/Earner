@@ -43,6 +43,7 @@ const SUPPORT_CATEGORIES = [
   { id: "overview", label: "Overview" },
   { id: "live-chat", label: "Live Chat" },
   { id: "tickets", label: "Tickets" },
+  { id: "inquiries", label: "General Inquiries" },
   { 
     id: "disputes", 
     label: "Disputes",
