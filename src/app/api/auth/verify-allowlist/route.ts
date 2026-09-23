@@ -19,9 +19,19 @@ export async function GET(req: NextRequest) {
 
     if (allowlistedEmail) {
       return NextResponse.json({ allowed: true });
-    } else {
-      return NextResponse.json({ allowed: false }, { status: 403 });
     }
+
+    // Bypass allowlist for existing ADMINs and SUPER_ADMINs
+    const existingUser = await prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+      select: { role: true }
+    });
+
+    if (existingUser && (existingUser.role === "ADMIN" || existingUser.role === "SUPER_ADMIN")) {
+      return NextResponse.json({ allowed: true });
+    }
+
+    return NextResponse.json({ allowed: false }, { status: 403 });
   } catch (error) {
     console.error("Error verifying allowlist email:", error);
     return NextResponse.json(
