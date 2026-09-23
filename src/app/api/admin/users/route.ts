@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminDb, handleApiError, ApiError } from "@/lib/apiAuth";
+import { getAdminAuth } from "@/lib/firebaseAdmin";
 
 export async function GET(req: NextRequest) {
   try {
@@ -101,8 +102,14 @@ export async function PATCH(req: NextRequest) {
     switch (action) {
       case "ban":      data = { isBanned: true };  break;
       case "unban":    data = { isBanned: false }; break;
-      case "verify":   data = { isVerified: true };  break;
-      case "unverify": data = { isVerified: false }; break;
+      case "verify":
+        data = { isVerified: true };
+        await getAdminAuth().updateUser(userId, { emailVerified: true });
+        break;
+      case "unverify":
+        data = { isVerified: false };
+        await getAdminAuth().updateUser(userId, { emailVerified: false });
+        break;
       case "changeRole":
         if (!role || !validRoles.includes(role)) {
           throw new ApiError(400, `Invalid role. Must be one of: ${validRoles.join(", ")}`);

@@ -105,12 +105,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // ── Block unverified users from being set in state ──
-        if (!firebaseUser.emailVerified) {
-          setUser(null);
-          setLoading(false);
-          return;
-        }
 
         setLoading(true);
         // ── Role & Permissions resolution ────────────────────────────────
@@ -185,6 +179,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
+  // ── Helper: Verify Allowlist ───────────────────────────────────────────
+  const verifyEmailAllowlist = async (email: string) => {
+    try {
+      const res = await fetch(`/api/auth/verify-allowlist?email=${encodeURIComponent(email)}`);
+      if (!res.ok) {
+        throw new Error("Your email is not authorized to access this platform. Please contact the administrator.");
+      }
+      const data = await res.json();
+      if (!data.allowed) {
+        throw new Error("Your email is not authorized to access this platform. Please contact the administrator.");
+      }
+    } catch (error: any) {
+      if (error.message.includes("authorized")) {
+        throw error;
+      }
+      // If the API fails for another reason, we might want to block or allow, but for now block to be safe
+      throw new Error("Unable to verify authorization. Please try again.");
+    }
+  };
+
   // ── Sign Up ────────────────────────────────────────────────────────────
   const signUp = async (email: string, password: string, name: string) => {
     if (!auth) {
@@ -193,32 +207,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     try {
       setError(null);
+      // Check allowlist before creating user
+      await verifyEmailAllowlist(email);
+
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       // Set display name
       await updateProfile(cred.user, { displayName: name });
       
-      // Send verification email (welcome message)
-      try {
-        await sendEmailVerification(cred.user);
-      } catch (emailErr) {
-        console.error("Failed to send verification email:", emailErr);
-      }
-
       // Save to Firestore
       await saveUserToFirestore({ ...cred.user, displayName: name });
-
-      // Enforce email verification by signing them out immediately
-      await firebaseSignOut(auth);
-      setUser(null);
-      throw new Error("auth/verification-required");
     } catch (e: any) {
       if (e.message === "auth/verification-required") {
         throw e;
       }
       
       let errorMessage = "Sign up failed. Please try again.";
-      if (e.code === "auth/email-already-in-use" || e.message?.includes("email-already-in-use")) {
-        errorMessage = "This email is already registered. Please sign in instead.";
+      if (e.message?.includes("authorized")) {
+        errorMessage = e.message;
+      } else if (e.code === "auth/email-already-in-use" || e.message?.includes("email-already-in-use")) {
+        errorMessage = "this email already registred";
       } else if (e.code === "auth/weak-password" || e.message?.includes("weak-password")) {
         errorMessage = "Password should be at least 6 characters.";
       } else if (e.code === "auth/invalid-email" || e.message?.includes("invalid-email")) {
@@ -238,21 +245,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     try {
       setError(null);
+      // Check allowlist before signing in
+      await verifyEmailAllowlist(email);
+
       const cred = await signInWithEmailAndPassword(auth, email, password);
-      
-      // Check if email is verified
-      if (!cred.user.emailVerified) {
-        try {
-          await sendEmailVerification(cred.user);
-        } catch (emailErr) {
-          console.error("Failed to resend verification email:", emailErr);
-        }
-        await firebaseSignOut(auth);
-        setUser(null);
-        throw new Error("auth/verification-required");
-      }
     } catch (e: any) {
-      if (e.message === "auth/verification-required") {
+      if (e.message?.includes("authorized")) {
+        setError(e.message);
         throw e;
       }
       if (
@@ -261,16 +260,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         e.code === "auth/user-not-found" ||
         e.message?.includes("invalid-credential")
       ) {
-        setError("Invalid email or password. Please try again.");
+        const errorMsg = "wrong eamail and password";
+        setError(errorMsg);
+        throw new Error(errorMsg);
       } else {
         const raw = e instanceof Error ? e.message : "Sign in failed";
         const clean = raw
           .replace("Firebase: ", "")
           .replace(/\(auth\/.*?\)/, "")
           .trim();
-        setError(clean || "Sign in failed. Please try again.");
+        const errorMsg = clean || "Sign in failed. Please try again.";
+        setError(errorMsg);
+        throw new Error(errorMsg);
       }
-      throw e;
     }
   };
 
@@ -282,13 +284,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     try {
       setError(null);
+      
+      // Since Google sign-in happens via popup, we can't verify the email *before* the popup
+      // unless we ask for the email first, which defeats the purpose.
+      // So we do the popup first, then verify the email, and if it fails we sign them out immediately.
+      
       const cred = await signInWithPopup(auth, googleProvider);
+      const userEmail = cred.user.email;
+      
+      if (!userEmail) {
+        await firebaseSignOut(auth);
+        throw new Error("Unable to retrieve email from Google.");
+      }
+
+      try {
+        await verifyEmailAllowlist(userEmail);
+      } catch (err: any) {
+        // Sign out immediately and delete user if they just signed up, but we'll just sign out
+        await firebaseSignOut(auth);
+        throw err;
+      }
+
       // Save/update in Firestore
       await saveUserToFirestore(cred.user);
-    } catch (e: unknown) {
+    } catch (e: any) {
       if (e instanceof Error && e.message.includes("popup-closed-by-user")) return;
-      const raw = e instanceof Error ? e.message : "Google sign in failed";
-      setError(raw.replace("Firebase: ", "").replace(/\(auth\/.*?\)/, "").trim());
+      
+      let errorMessage = "Google sign in failed";
+      if (e.message?.includes("authorized")) {
+        errorMessage = e.message;
+      } else if (e instanceof Error) {
+        errorMessage = e.message.replace("Firebase: ", "").replace(/\(auth\/.*?\)/, "").trim();
+      }
+      
+      setError(errorMessage);
       throw e;
     }
   };

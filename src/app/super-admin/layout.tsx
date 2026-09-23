@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, Briefcase, ShoppingBag,
   Flag, BarChart3, Loader2, ArrowLeft, ChevronRight,
   Shield, Search, Bell, Menu, CreditCard, Settings, X, LogOut, User,
-  Key, ActivitySquare, Monitor, Layout, LifeBuoy
+  Key, KeyRound, ActivitySquare, Monitor, Layout, LifeBuoy
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -22,6 +22,7 @@ const NAV = [
   { href: "/super-admin/reports", label: "Reports", icon: Flag, requiredPermission: null },
   { href: "/super-admin/analytics", label: "Analytics", icon: BarChart3, requiredPermission: null },
   { href: "/super-admin/admins", label: "Admin Management", icon: Shield, requiredPermission: null },
+  { href: "/super-admin/users/whitelist", label: "Auth Whitelist", icon: KeyRound, requiredPermission: null },
   { href: "/super-admin/roles", label: "Roles & Perms", icon: Key, requiredPermission: null },
   { href: "/super-admin/audit-logs", label: "Audit Logs", icon: ActivitySquare, requiredPermission: null },
 ];

@@ -531,3 +531,11 @@ model LiveChatMessage {
   message     String          @db.Text
   createdAt   DateTime        @default(now())
 }
+
+// ─── Authentication Whitelist ───────────────────────────────────────────
+
+model AllowlistEmail {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}

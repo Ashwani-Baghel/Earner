@@ -24,7 +24,6 @@ export function RegisterModal({ open, onClose, onSwitchToLogin }: RegisterModalP
   const [showPw, setShowPw] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isSeller, setIsSeller] = useState(false);
-  const [showVerifyMessage, setShowVerifyMessage] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -34,7 +33,7 @@ export function RegisterModal({ open, onClose, onSwitchToLogin }: RegisterModalP
       setPassword("");
       setConfirmPassword("");
       setShowPw(false);
-      setShowVerifyMessage(false);
+      setShowPw(false);
       clearError();
     }
   }, [open, clearError]);
@@ -99,16 +98,9 @@ export function RegisterModal({ open, onClose, onSwitchToLogin }: RegisterModalP
     setSubmitting(true);
     try {
       await signUp(email, password, name);
-      // We shouldn't reach here because signUp throws verification-required
+      toast.success("Account created successfully!");
+      await redirectAfterSignup();
     } catch (err: any) {
-      if (err.message === "auth/verification-required") {
-        setShowVerifyMessage(true);
-        // Clear fields in background
-        setEmail("");
-        setPassword("");
-        setConfirmPassword("");
-        return;
-      }
       toast.error(err.message || "Failed to create account");
     } finally {
       setSubmitting(false);
@@ -130,21 +122,7 @@ export function RegisterModal({ open, onClose, onSwitchToLogin }: RegisterModalP
 
 
   return (
-    <Modal open={open} onClose={() => { clearError(); setName(""); setEmail(""); setPassword(""); setConfirmPassword(""); setShowPw(false); setShowVerifyMessage(false); onClose(); }} size="sm">
-      {showVerifyMessage ? (
-        <div className="text-center py-8 px-4 flex flex-col items-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
-            <Mail size={32} className="text-[#1dbf73]" />
-          </div>
-          <h2 className="text-2xl font-bold text-[#404145] mb-2">Check your email</h2>
-          <p className="text-[#74767e] mb-8 text-sm max-w-[280px]">
-            We&apos;ve sent a verification link to your email address. Please click the link to verify your account before logging in.
-          </p>
-          <Button onClick={onClose} className="w-full">
-            Got it, thanks!
-          </Button>
-        </div>
-      ) : (
+    <Modal open={open} onClose={() => { clearError(); setName(""); setEmail(""); setPassword(""); setConfirmPassword(""); setShowPw(false); onClose(); }} size="sm">
         <div className="space-y-5">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-[#404145]">Create an account</h2>
@@ -239,7 +217,6 @@ export function RegisterModal({ open, onClose, onSwitchToLogin }: RegisterModalP
             <a href="#" className="underline hover:text-[#404145]">Privacy Policy</a>.
           </p>
         </div>
-      )}
     </Modal>
   );
 }

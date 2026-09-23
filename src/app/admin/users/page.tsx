@@ -2,9 +2,10 @@
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Search, RefreshCw, Ban, CheckCircle, Trash2, Shield, UserCheck, Plus, X, Loader2 } from "lucide-react";
+import { Search, RefreshCw, Ban, CheckCircle, Trash2, Shield, UserCheck, Plus, X, Loader2, KeyRound, Eye, EyeOff } from "lucide-react";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
+import { toast } from "react-hot-toast";
 
 interface AdminUser {
   id: string;
@@ -31,6 +32,10 @@ function AdminUsersPageContent() {
   const [role, setRole]         = useState(searchParams.get("role")?.toUpperCase() || "");
   const [isSeller, setIsSeller] = useState(searchParams.get("isSeller") === "true");
   const [confirm, setConfirm]   = useState<{ action: string; target: AdminUser; extra?: string } | null>(null);
+  const [resetUser, setResetUser] = useState<AdminUser | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [actioning, setActioning] = useState(false);
 
   useEffect(() => {
@@ -97,6 +102,41 @@ function AdminUsersPageContent() {
     } finally {
       setActioning(false);
       setConfirm(null);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetUser || !user) return;
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    setActioning(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch("/api/admin/users/reset-password", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: resetUser.id, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to reset password");
+      
+      toast.success("Password reset successfully");
+      setResetUser(null);
+      setNewPassword("");
+      setConfirmPassword("");
+      setShowPassword(false);
+    } catch (error: any) {
+      toast.error(error.message || "An error occurred");
+    } finally {
+      setActioning(false);
     }
   };
 
@@ -243,6 +283,13 @@ function AdminUsersPageContent() {
                           )}
                         </div>
                         <button
+                          onClick={() => setResetUser(u)}
+                          className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-semibold transition-colors"
+                          title="Reset Password"
+                        >
+                          <KeyRound size={11} /> Reset Pwd
+                        </button>
+                        <button
                           onClick={() => setConfirm({ action: "delete", target: u })}
                           className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-xs font-semibold transition-colors"
                         >
@@ -272,6 +319,99 @@ function AdminUsersPageContent() {
         onConfirm={doAction}
         onCancel={() => setConfirm(null)}
       />
+
+      {resetUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <KeyRound className="text-indigo-500" size={20} />
+                Reset Password
+              </h3>
+              <button
+                onClick={() => {
+                  setResetUser(null);
+                  setNewPassword("");
+                  setConfirmPassword("");
+                  setShowPassword(false);
+                }}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                disabled={actioning}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleResetPassword} className="p-6">
+              <p className="text-sm text-slate-600 mb-6">
+                You are resetting the password for <strong>{resetUser.name}</strong> ({resetUser.email}). They will be able to log in immediately with the new password.
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">New Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full pl-4 pr-10 py-2 border border-slate-300 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                      placeholder="At least 6 characters"
+                      required
+                      minLength={6}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Confirm Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full pl-4 pr-10 py-2 border border-slate-300 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                      placeholder="Confirm new password"
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetUser(null);
+                    setNewPassword("");
+                    setConfirmPassword("");
+                    setShowPassword(false);
+                  }}
+                  className="px-5 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                  disabled={actioning}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actioning || !newPassword || !confirmPassword}
+                  className="px-5 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {actioning && <Loader2 size={16} className="animate-spin" />}
+                  {actioning ? "Resetting..." : "Reset Password"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
